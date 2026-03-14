@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>∞ Infinite Elements</title>
+<!-- Phaser.js for Poki boilerplate / mobile controls -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+<!-- Poki SDK -->
+<script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js" onerror="window.PokiSDK=null"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Rajdhani',sans-serif;user-select:none;-webkit-user-select:none;}
+#game-wrap{position:relative;width:100vw;height:100vh;display:flex;flex-direction:column;}
+
+/* ── POKI LOADING SCREEN ── */
+#poki-loading{position:fixed;inset:0;background:#000;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .6s;}
+#poki-loading.hide{opacity:0;pointer-events:none;}
+.poki-logo{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;background:linear-gradient(135deg,#f0c040,#ff6b35,#c850c0,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:4px;animation:logoPulse 1.8s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.7;transform:scale(.97);}}
+.poki-bar-outer{width:300px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+.poki-bar-inner{height:100%;background:linear-gradient(90deg,#667eea,#f093fb,#f0c040);border-radius:3px;transition:width .3s ease;width:0%;}
+.poki-sub{font-size:13px;color:rgba(255,255,255,.35);letter-spacing:2px;font-family:'Rajdhani',sans-serif;}
+#ad-overlay{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:1900;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+#ad-overlay.show{display:flex;}
+#ad-overlay .ad-msg{font-family:'Orbitron',monospace;font-size:14px;color:rgba(255,255,255,.5);letter-spacing:2px;}
+#ad-overlay .ad-skip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:8px 20px;color:white;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;margin-top:10px;}
+
+/* ── HEADER ── */
+#header{height:52px;background:rgba(0,0,0,.82);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:100;flex-shrink:0;}
+#game-title{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;background:linear-gradient(135deg,#f0c040,#ff6b35,#c850c0,#667eea);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px;white-space:nowrap;}
+.hbtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:5px 12px;color:rgba(255,255,255,.8);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:.5px;}
+.hbtn:hover{background:rgba(255,255,255,.16);}
+.hbtn.danger{border-color:rgba(255,80,80,.3);color:#ff8080;}
+.hbtn.danger:hover{background:rgba(255,80,80,.2);}
+.hbtn.ai-btn{border-color:rgba(200,80,192,.35);color:#e080e0;background:rgba(200,80,192,.1);}
+.hbtn.ai-btn:hover{background:rgba(200,80,192,.22);}
+#coin-display{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);border-radius:16px;padding:4px 14px 4px 8px;font-size:14px;font-weight:700;color:#ffd700;white-space:nowrap;}
+.coin-icon{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe566,#f0c040 50%,#b8860b);border:2px solid #f0c040;box-shadow:0 0 8px rgba(240,192,64,.6),inset 0 1px 0 rgba(255,255,255,.4);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#7a5000;flex-shrink:0;position:relative;overflow:hidden;}
+.coin-icon::after{content:'';position:absolute;top:2px;left:4px;width:6px;height:4px;background:rgba(255,255,255,.4);border-radius:50%;transform:rotate(-20deg);}
+.coin-icon-sm{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe566,#f0c040 50%,#b8860b);border:1.5px solid #f0c040;box-shadow:0 0 5px rgba(240,192,64,.5);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#7a5000;flex-shrink:0;position:relative;overflow:hidden;vertical-align:middle;}
+.coin-icon-sm::after{content:'';position:absolute;top:1px;left:3px;width:4px;height:3px;background:rgba(255,255,255,.4);border-radius:50%;transform:rotate(-20deg);}
+#music-bar{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:4px 10px;font-size:12px;color:rgba(255,255,255,.5);}
+#music-bar button{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px;padding:0 2px;}
+#music-bar button:hover{color:white;}
+#now-playing{max-width:90px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+/* ── LAYOUT ── */
+#main-row{display:flex;flex:1;overflow:hidden;}
+#craft-area{flex:1;position:relative;overflow:hidden;cursor:crosshair;}
+#bg-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+/* Interactive canvas for click effects */
+#fx-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+
+/* ── SIDEBAR ── */
+#sidebar{width:210px;background:rgba(5,5,18,.93);backdrop-filter:blur(16px);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+#search-wrap{padding:8px 8px 4px;}
+#element-search{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:white;font-family:'Rajdhani',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+#element-search:focus{border-color:rgba(102,126,234,.5);}
+#element-search::placeholder{color:rgba(255,255,255,.2);}
+.cat-filters{display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px;}
+.cat-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:2px 7px;font-size:10px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.3px;}
+.cat-btn.active{background:rgba(102,126,234,.18);border-color:rgba(102,126,234,.35);color:#a0b4ff;}
+.panel-label{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.25);text-transform:uppercase;padding:6px 10px 4px;}
+#elements-list{flex:1;overflow-y:auto;padding:0 6px 8px;}
+#elements-list::-webkit-scrollbar{width:3px;}
+#elements-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+.element-item{display:flex;align-items:center;gap:7px;padding:7px 9px;margin:2px 0;border-radius:9px;cursor:grab;border:1px solid transparent;transition:all .15s;background:rgba(255,255,255,.03);font-size:12px;font-weight:600;color:rgba(255,255,255,.8);}
+.element-item:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.12);transform:translateX(-2px);}
+.element-item:active{cursor:grabbing;}
+.e-icon{font-size:17px;flex-shrink:0;}
+.e-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.new-badge{font-size:8px;background:linear-gradient(135deg,#ff6b35,#f0c040);color:#000;padding:1px 4px;border-radius:6px;font-weight:700;flex-shrink:0;}
+.ai-badge{font-size:8px;background:linear-gradient(135deg,#c850c0,#667eea);color:#fff;padding:1px 4px;border-radius:6px;font-weight:700;flex-shrink:0;}
+
+.hbtn.hint-btn{border-color:rgba(255,230,100,.35);color:#ffe066;background:rgba(255,230,100,.1);}
+.hbtn.hint-btn:hover{background:rgba(255,230,100,.22);}
+.craft-el{position:absolute;display:flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(15,15,35,.92);border:1px solid rgba(255,255,255,.14);border-radius:11px;cursor:grab;font-size:12px;font-weight:600;color:white;box-shadow:0 4px 18px rgba(0,0,0,.45);z-index:20;backdrop-filter:blur(8px);white-space:nowrap;transition:box-shadow .2s,border-color .2s,opacity .2s,transform .15s;}
+.craft-el:hover{border-color:rgba(255,255,255,.28);box-shadow:0 6px 28px rgba(0,0,0,.55);}
+.craft-el:active{cursor:grabbing;}
+.craft-el .ce-emoji{font-size:18px;}
+.craft-el.ai-el{border-color:rgba(200,80,192,.4);box-shadow:0 4px 18px rgba(200,80,192,.2);}
+/* Streak banner */
+#streak-banner{position:fixed;top:62px;right:16px;background:linear-gradient(135deg,rgba(255,120,40,.9),rgba(255,60,0,.9));color:#fff;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;pointer-events:none;z-index:500;opacity:0;transition:opacity .3s;letter-spacing:1px;}
+#streak-banner.show{opacity:1;}
+
+/* ── TOASTS ── */
+#discovery-toast{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-30px);background:linear-gradient(135deg,rgba(240,192,64,.96),rgba(255,107,53,.96));color:#000;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;padding:9px 22px;border-radius:25px;pointer-events:none;z-index:600;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);letter-spacing:1px;box-shadow:0 4px 28px rgba(240,192,64,.4);}
+#discovery-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#ai-thinking{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-30px);background:linear-gradient(135deg,rgba(102,126,234,.95),rgba(200,80,192,.95));color:#fff;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:9px 22px;border-radius:25px;pointer-events:none;z-index:601;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);letter-spacing:1px;}
+#ai-thinking.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);z-index:400;display:none;align-items:center;justify-content:center;pointer-events:all;}
+.modal-overlay.open{display:flex;}
+.modal-inner{background:rgba(8,8,22,.99);border:1px solid rgba(255,255,255,.09);border-radius:20px;width:min(740px,96vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 80px rgba(102,126,234,.25);}
+.modal-hdr{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px;}
+.modal-title{font-family:'Orbitron',monospace;font-size:17px;font-weight:900;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.modal-coins{margin-left:auto;color:#ffd700;font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px;}
+.modal-close{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:white;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.modal-close:hover{background:rgba(255,80,80,.3);}
+.modal-tabs{display:flex;padding:10px 22px 0;gap:3px;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap;}
+.modal-tab{padding:7px 12px;background:transparent;border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;color:rgba(255,255,255,.4);cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;transition:all .15s;letter-spacing:.4px;}
+.modal-tab.active{background:rgba(102,126,234,.14);border-color:rgba(102,126,234,.28);color:#a0b4ff;}
+.modal-body{flex:1;overflow-y:auto;padding:14px 22px;}
+.modal-body::-webkit-scrollbar{width:4px;}
+.modal-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+/* ── SHOP ── */
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.shop-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:13px;text-align:center;cursor:pointer;transition:all .2s;}
+.shop-item:hover:not(.owned-item):not(.locked-item){background:rgba(102,126,234,.13);border-color:rgba(102,126,234,.35);transform:translateY(-2px);box-shadow:0 8px 22px rgba(102,126,234,.18);}
+.shop-item.owned-item{background:rgba(80,200,80,.07);border-color:rgba(80,200,80,.18);cursor:default;}
+.shop-item.locked-item{opacity:.4;cursor:not-allowed;}
+.shop-item.active-item{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);}
+.si-preview{width:100%;height:68px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;position:relative;}
+.si-name{font-size:12px;font-weight:700;color:white;margin-bottom:3px;}
+.si-desc{font-size:10px;color:rgba(255,255,255,.35);margin-bottom:8px;line-height:1.35;}
+.si-price{font-size:12px;font-weight:700;color:#ffd700;display:flex;align-items:center;justify-content:center;gap:4px;}
+.si-price.p-owned{color:#50c850;}.si-price.p-locked{color:rgba(255,255,255,.25);font-size:10px;}
+.si-interact{font-size:9px;color:rgba(255,255,255,.3);margin-top:4px;letter-spacing:.5px;}
+
+/* ── LEADERBOARD ── */
+.lb-wrap{display:flex;flex-direction:column;gap:8px;}
+.lb-me,.lb-row{border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.lb-me{background:rgba(102,126,234,.12);border:1px solid rgba(102,126,234,.25);}
+.lb-row{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
+.lb-rank{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:rgba(255,255,255,.3);width:28px;text-align:center;}
+.lb-rank.gold{color:#ffd700;}.lb-rank.silver{color:#c0c0c0;}.lb-rank.bronze{color:#cd7f32;}
+.lb-name{flex:1;font-size:14px;font-weight:600;color:white;}
+.lb-score{font-family:'Orbitron',monospace;font-size:11px;color:#a0b4ff;}
+.lb-badge{font-size:9px;background:rgba(102,126,234,.25);border-radius:5px;padding:1px 5px;color:#a0b4ff;}
+.lb-input-wrap{display:flex;gap:8px;margin-bottom:14px;}
+.lb-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 12px;color:white;font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;}
+.lb-input:focus{border-color:rgba(102,126,234,.4);}
+.lb-submit{background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:9px;padding:8px 16px;color:white;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* ── AI CRAFT MODAL ── */
+.ai-wrap{display:flex;flex-direction:column;gap:14px;}
+.ai-desc{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;}
+.ai-desc span{color:#c890f0;}
+.ai-input-row{display:flex;gap:8px;}
+.ai-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(200,80,192,.25);border-radius:10px;padding:10px 14px;color:white;font-family:'Rajdhani',sans-serif;font-size:15px;outline:none;transition:border-color .2s;}
+.ai-input:focus{border-color:rgba(200,80,192,.55);}
+.ai-btn-go{background:linear-gradient(135deg,#c850c0,#667eea);border:none;border-radius:10px;padding:10px 20px;color:white;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.5px;}
+.ai-btn-go:hover{transform:scale(1.04);box-shadow:0 4px 20px rgba(200,80,192,.4);}
+.ai-btn-go:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.ai-suggestions{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+.ai-sug{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;font-size:12px;color:rgba(255,255,255,.7);}
+.ai-sug:hover{background:rgba(200,80,192,.15);border-color:rgba(200,80,192,.3);color:white;}
+.ai-sug .as-emoji{font-size:24px;display:block;margin-bottom:5px;}
+.ai-result{background:rgba(200,80,192,.1);border:1px solid rgba(200,80,192,.3);border-radius:14px;padding:18px;text-align:center;}
+.ai-result .ar-emoji{font-size:52px;display:block;margin-bottom:8px;}
+.ai-result .ar-name{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:white;margin-bottom:6px;}
+.ai-result .ar-desc{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:14px;line-height:1.5;}
+.ai-result .ar-add{background:linear-gradient(135deg,#c850c0,#667eea);border:none;border-radius:10px;padding:10px 24px;color:white;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.ai-result .ar-add:hover{transform:scale(1.04);}
+
+/* ── CREATOR ── */
+.creator-wrap{display:flex;flex-direction:column;gap:14px;}
+.creator-field label{display:block;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.creator-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:9px 12px;color:white;font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.creator-input:focus{border-color:rgba(102,126,234,.4);}
+.emoji-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;max-height:180px;overflow-y:auto;background:rgba(0,0,0,.3);border-radius:9px;padding:8px;}
+.ep-btn{background:rgba(255,255,255,.05);border:1px solid transparent;border-radius:6px;padding:5px;font-size:17px;cursor:pointer;transition:all .12s;text-align:center;}
+.ep-btn:hover{background:rgba(102,126,234,.2);transform:scale(1.1);}
+.ep-btn.selected{background:rgba(102,126,234,.3);border-color:rgba(102,126,234,.5);}
+.creator-preview{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;}
+.create-btn{background:linear-gradient(135deg,#f0c040,#ff6b35);border:none;border-radius:10px;padding:11px;color:#000;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:1px;}
+.create-btn:hover{transform:scale(1.02);box-shadow:0 4px 20px rgba(240,192,64,.4);}
+.create-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* ── PARTICLES / FX ── */
+@keyframes resultPop{0%{transform:scale(.2) translateY(20px);opacity:0;}60%{transform:scale(1.12) translateY(-4px);opacity:1;}100%{transform:scale(1);opacity:1;}}
+.result-pop{animation:resultPop .45s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0;}}
+.particle{position:absolute;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:60;animation:particleFly .65s ease-out forwards;}
+@keyframes comboAnim{0%{transform:translateX(-50%) scale(.5);opacity:0;}20%{transform:translateX(-50%) scale(1.1);opacity:1;}80%{transform:translateX(-50%) scale(1);opacity:1;}100%{transform:translateX(-50%) scale(.8);opacity:0;}}
+.combo-text{position:fixed;left:50%;font-family:'Orbitron',monospace;font-size:22px;font-weight:900;pointer-events:none;z-index:500;animation:comboAnim 1.2s ease forwards;text-shadow:0 0 25px currentColor;letter-spacing:2px;}
+
+/* ── SETTINGS ── */
+.sett-list{display:flex;flex-direction:column;gap:6px;}
+.sett-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;gap:14px;}
+.sett-left{display:flex;flex-direction:column;gap:3px;}
+.sett-label{font-size:14px;font-weight:700;color:white;letter-spacing:.3px;}
+.sett-desc{font-size:11px;color:rgba(255,255,255,.35);line-height:1.35;}
+/* Toggle switch */
+.toggle-wrap{position:relative;width:46px;height:26px;flex-shrink:0;}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-slider{position:absolute;inset:0;border-radius:13px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.12);cursor:pointer;transition:background .2s,border-color .2s;}
+.toggle-slider::before{content:'';position:absolute;width:20px;height:20px;left:2px;top:2px;border-radius:50%;background:rgba(255,255,255,.5);transition:transform .2s,background .2s;}
+.toggle-wrap input:checked + .toggle-slider{background:rgba(102,234,130,.3);border-color:rgba(80,220,100,.5);}
+.toggle-wrap input:checked + .toggle-slider::before{transform:translateX(20px);background:#50dc64;}
+/* Volume slider */
+.vol-row{display:flex;align-items:center;gap:10px;}
+.vol-icon{font-size:16px;flex-shrink:0;}
+.vol-slider{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+.vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#667eea,#f093fb);border:2px solid rgba(255,255,255,.4);cursor:pointer;box-shadow:0 0 6px rgba(102,126,234,.6);}
+.vol-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#667eea,#f093fb);border:2px solid rgba(255,255,255,.4);cursor:pointer;}
+.vol-val{font-family:'Orbitron',monospace;font-size:12px;color:#a0b4ff;width:32px;text-align:right;}
+#info-bar{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;z-index:30;}
+.info-pill{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:5px 11px;font-size:11px;color:rgba(255,255,255,.35);backdrop-filter:blur(8px);}
+.info-pill span{color:rgba(255,255,255,.6);}
+
+/* ── MOBILE (Phaser touch area hint) ── */
+#touch-hint{display:none;position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);border-radius:12px;padding:8px 16px;font-size:12px;color:rgba(255,255,255,.4);pointer-events:none;z-index:40;}
+@media(max-width:600px){
+  #sidebar{width:165px;}
+  #game-title{font-size:12px;}
+  #music-bar{display:none;}
+  #touch-hint{display:block;}
+  .hbtn{font-size:11px;padding:4px 8px;}
+}
+</style>
+</head>
+<body>
+
+<!-- POKI LOADING SCREEN -->
+<div id="poki-loading">
+  <div class="poki-logo">∞ INFINITE ELEMENTS</div>
+  <div class="poki-bar-outer"><div class="poki-bar-inner" id="poki-bar"></div></div>
+  <div class="poki-sub" id="poki-sub">FORGING THE UNIVERSE...</div>
+</div>
+
+<!-- AD OVERLAY (shown only in dev/mock mode — real Poki SDK renders its own ad UI) -->
+<div id="ad-overlay">
+  <div class="ad-msg">⚡ ADVERTISEMENT ⚡</div>
+  <div id="ad-content" style="width:300px;height:250px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.2);font-size:13px;font-family:'Rajdhani',sans-serif;letter-spacing:1px;">Ad will appear here</div>
+  <div id="ad-mock-countdown" style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,.25);letter-spacing:1px;margin-top:4px;">Ad closing in 3s…</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.18);margin-top:2px;">Game is paused • Music muted</div>
+</div>
+
+<div id="game-wrap">
+  <div id="header">
+    <div id="game-title">∞ INFINITE ELEMENTS</div>
+    <button class="hbtn ai-btn" onclick="openModal('ai-modal')">🤖 AI CRAFT</button>
+    <button class="hbtn hint-btn" id="suggest-btn" onclick="doSuggest()" title="Show me what I can make!">💡 HINT</button>
+    <button class="hbtn hint-btn" id="ad-hint-btn" onclick="watchAdForHint()" title="Watch a short ad for 50 coins + a free hint">🎬 AD HINT</button>
+    <button class="hbtn" onclick="openShop('backgrounds')">🛒 SHOP</button>
+    <button class="hbtn" onclick="openModal('leaderboard-modal')">🏆 BOARD</button>
+    <button class="hbtn danger" onclick="clearBoard()">🗑 CLEAR</button>
+    <button class="hbtn" onclick="openModal('settings-modal')" title="Settings">⚙️</button>
+    <div id="music-bar">
+      <span id="now-playing">♪ Loading…</span>
+      <button onclick="prevTrack()">⏮</button>
+      <button id="play-btn" onclick="toggleMusic()">⏸</button>
+      <button onclick="nextTrack()">⏭</button>
+      <button onclick="openShop('music')" title="Music Shop">🎵</button>
+    </div>
+    <div id="coin-display"><span class="coin-icon">✦</span><span id="coin-count">0</span></div>
+  </div>
+
+  <div id="main-row">
+    <div id="craft-area">
+      <canvas id="bg-canvas"></canvas>
+      <canvas id="fx-canvas"></canvas>
+      <div id="touch-hint">👆 Drag elements together to combine</div>
+      <div id="info-bar">
+        <div class="info-pill">🖱️ <span>Move mouse</span> to shift the background • Drag elements together • 💡 HINT spawns ingredients • <span>AI CRAFT</span> = anything</div>
+        <div class="info-pill">🔬 <span id="disc-num">4</span> discovered • <span id="total-num">0</span> total</div>
+      </div>
+    </div>
+    <div id="sidebar">
+      <div id="search-wrap"><input type="text" id="element-search" placeholder="Search…"></div>
+      <div class="cat-filters" id="cat-filters">
+        <div class="cat-btn active" data-cat="all">All</div>
+        <div class="cat-btn" data-cat="starter">Base</div>
+        <div class="cat-btn" data-cat="nature">Nature</div>
+        <div class="cat-btn" data-cat="human">Human</div>
+        <div class="cat-btn" data-cat="tech">Tech</div>
+        <div class="cat-btn" data-cat="cosmic">Cosmic</div>
+        <div class="cat-btn" data-cat="ai">AI Made</div>
+        <div class="cat-btn" data-cat="custom">Custom</div>
+      </div>
+      <div class="panel-label" id="panel-label">ELEMENTS (4)</div>
+      <div id="elements-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="discovery-toast">✨ NEW!</div>
+<div id="ai-thinking">🤖 AI IS THINKING…</div>
+<div id="streak-banner">🔥 STREAK!</div>
+
+<!-- AI CRAFT MODAL -->
+<div class="modal-overlay" id="ai-modal">
+  <div class="modal-inner">
+    <div class="modal-hdr">
+      <span>🤖</span>
+      <div class="modal-title">AI ELEMENT CREATOR</div>
+      <div class="modal-coins"><span class="coin-icon">✦</span><span id="ai-coins">0</span></div>
+      <button class="modal-close" onclick="closeModal('ai-modal')">✕</button>
+    </div>
+    <div class="modal-body"><div id="ai-body"></div></div>
+  </div>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal-overlay" id="shop-modal">
+  <div class="modal-inner">
+    <div class="modal-hdr">
+      <span>🛒</span>
+      <div class="modal-title">ELEMENT SHOP</div>
+      <div class="modal-coins"><span class="coin-icon">✦</span><span id="shop-coins">0</span></div>
+      <button class="modal-close" onclick="closeModal('shop-modal')">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-tab="backgrounds" onclick="shopTab(this,'backgrounds')">🎨 Backgrounds</div>
+      <div class="modal-tab" data-tab="boosters" onclick="shopTab(this,'boosters')">⚡ Boosters</div>
+      <div class="modal-tab" data-tab="music" onclick="shopTab(this,'music')">🎵 Music</div>
+      <div class="modal-tab" data-tab="upload" onclick="shopTab(this,'upload')">📸 Upload BG</div>
+      <div class="modal-tab" data-tab="creator" onclick="shopTab(this,'creator')">✏️ Creator</div>
+    </div>
+    <div class="modal-body" id="shop-body"></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="modal-overlay" id="leaderboard-modal">
+  <div class="modal-inner" style="max-width:480px;">
+    <div class="modal-hdr">
+      <span>🏆</span><div class="modal-title">LEADERBOARD</div>
+      <button class="modal-close" onclick="closeModal('leaderboard-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="lb-body"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-inner" style="max-width:420px;">
+    <div class="modal-hdr">
+      <span>⚙️</span><div class="modal-title">SETTINGS</div>
+      <button class="modal-close" onclick="closeModal('settings-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;">
+      <div class="sett-list" id="sett-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  POKI SDK INTEGRATION  — full commercialBreak / rewardedBreak
+// ============================================================
+const Poki = (() => {
+  let sdk = null;
+  let adsReady = false;
+  let craftsSinceAd = 0;
+  const AD_EVERY = 15;
+
+  // ── Pause state ──────────────────────────────────────────
+  // When an ad is running or a modal is open the game is "paused":
+  // • Crafting interactions are blocked
+  // • Music/SFX are muted (gain → 0)
+  // • Internal game loop skips update logic
+  let _paused = false;
+  let _modalDepth = 0;       // how many modals are open (nested)
+  let _adRunning = false;    // true only during an actual ad break
+
+  function isPaused()  { return _paused; }
+  function isAdRunning(){ return _adRunning; }
+
+  function _setPaused(val) {
+    _paused = val;
+    // Mute / unmute the Web Audio master gain instantly
+    if (window.Music) {
+      window.Music.setAdMute(val);
+    }
+    // Block/unblock craft-area pointer events during ads
+    const ca = document.getElementById('craft-area');
+    if (ca) ca.style.pointerEvents = val ? 'none' : '';
+  }
+
+  // Called from openModal / closeModal (see below)
+  function onModalOpen() {
+    _modalDepth++;
+    if (_modalDepth === 1) {
+      if (sdk) sdk.gameplayStop();
+      _setPaused(true);
+    }
+  }
+  function onModalClose() {
+    _modalDepth = Math.max(0, _modalDepth - 1);
+    if (_modalDepth === 0 && !_adRunning) {
+      if (sdk) sdk.gameplayStart();
+      _setPaused(false);
+    }
+  }
+
+  function init(onReady) {
+    if (window.PokiSDK) {
+      sdk = window.PokiSDK;
+      sdk.init()
+        .then(() => {
+          console.log('[Poki] SDK ready');
+          adsReady = true;
+          // Tell Poki the initial audio state
+          try { sdk.setAudio(true); } catch(e) {}
+          onReady(true);
+        })
+        .catch(err => {
+          console.warn('[Poki] SDK init failed — dev/mock mode', err);
+          onReady(false);
+        });
+    } else {
+      console.log('[Poki] SDK not loaded — dev/mock mode');
+      onReady(false);
+    }
+  }
+
+  function gameplayStart() {
+    if (sdk) sdk.gameplayStart();
+  }
+  function gameplayStop() {
+    if (sdk) sdk.gameplayStop();
+  }
+
+  function onCraft() {
+    if (_paused) return;          // don't count crafts during ads/menus
+    craftsSinceAd++;
+    if (craftsSinceAd >= AD_EVERY) {
+      craftsSinceAd = 0;
+      showCommercialBreak();
+    }
+  }
+
+  // ── Real PokiSDK.commercialBreak() — replaces old midgameAd / skipAd ──
+  function showCommercialBreak(onDone) {
+    _adRunning = true;
+    _setPaused(true);
+    if (sdk) sdk.gameplayStop();
+
+    const finish = () => {
+      _adRunning = false;
+      // Only unpause if no modal is still open
+      if (_modalDepth === 0) {
+        _setPaused(false);
+        if (sdk) sdk.gameplayStart();
+      }
+      document.getElementById('ad-overlay').classList.remove('show');
+      if (onDone) onDone();
+    };
+
+    if (sdk && adsReady) {
+      // ✅ Real Poki commercial break
+      sdk.commercialBreak()
+        .then(finish)
+        .catch(finish);           // always resume even on error
+    } else {
+      // Dev mock — show overlay for 3 s then auto-close
+      document.getElementById('ad-overlay').classList.add('show');
+      // Update mock countdown
+      let t = 3;
+      const mockTimer = setInterval(() => {
+        const el = document.getElementById('ad-mock-countdown');
+        if (el) el.textContent = `Ad closing in ${--t}s…`;
+        if (t <= 0) { clearInterval(mockTimer); finish(); }
+      }, 1000);
+    }
+  }
+
+  // ── Real PokiSDK.rewardedBreak() ──────────────────────────
+  function showRewardedAd(onRewarded) {
+    _adRunning = true;
+    _setPaused(true);
+    if (sdk) sdk.gameplayStop();
+
+    const finish = (rewarded) => {
+      _adRunning = false;
+      if (_modalDepth === 0) {
+        _setPaused(false);
+        if (sdk) sdk.gameplayStart();
+      }
+      document.getElementById('ad-overlay').classList.remove('show');
+      if (rewarded && onRewarded) onRewarded();
+    };
+
+    if (sdk && adsReady) {
+      // ✅ Real Poki rewarded break
+      sdk.rewardedBreak()
+        .then(rewarded => finish(rewarded))
+        .catch(() => finish(false));
+    } else {
+      // Dev mock
+      document.getElementById('ad-overlay').classList.add('show');
+      let t = 3;
+      const mockTimer = setInterval(() => {
+        const el = document.getElementById('ad-mock-countdown');
+        if (el) el.textContent = `Rewarded ad closing in ${--t}s…`;
+        if (t <= 0) { clearInterval(mockTimer); finish(true); }
+      }, 1000);
+    }
+  }
+
+  // ── PokiSDK.setAudio sync ─────────────────────────────────
+  // Call this whenever audio state changes so the Poki platform knows.
+  function syncAudio(enabled) {
+    if (sdk) {
+      try { sdk.setAudio(enabled); } catch(e) {}
+    }
+  }
+
+  return {
+    init, gameplayStart, gameplayStop,
+    onCraft, showCommercialBreak, showRewardedAd,
+    onModalOpen, onModalClose,
+    isPaused, isAdRunning, syncAudio,
+  };
+})();
+
+// skipAd is now only used by the "Continue" button in the dev mock overlay
+window.skipAd = () => {
+  // Only fires in dev mode — real SDK handles its own dismissal
+  if (!Poki.isAdRunning()) return;
+  document.getElementById('ad-overlay').classList.remove('show');
+};
+
+// ── Tab visibility: mute when player switches away ────────────
+document.addEventListener('visibilitychange', () => {
+  if (!window.Music) return;
+  const hidden = document.hidden;
+  window.Music.setAdMute(hidden);
+  Poki.syncAudio(!hidden);
+});
+
+// ============================================================
+//  REWARDED AD FOR HINT  — watchAdForHint()
+//  Wraps Poki.showRewardedAd. If the user watches the full ad
+//  they receive 50 coins + a free hint spawn. If skipped: nothing.
+// ============================================================
+window.watchAdForHint = function() {
+  // Disable the button while the ad is running
+  const btn = document.getElementById('suggest-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  Poki.showRewardedAd(() => {
+    // ── Rewarded: grant 50 coins + trigger a hint ──────────
+    awardCoins(50);
+    floatCoins(50);
+    showCombo('🎁 +50 coins & a free hint!', '#ffe066');
+
+    // Re-use doSuggest logic inline so we bypass the cooldown
+    const available = RECIPES.filter(r =>
+      GS.discovered.has(r[0]) && GS.discovered.has(r[1]) && !GS.discovered.has(r[2])
+    );
+    if (available.length) {
+      const pick = available[Math.floor(Math.random() * Math.min(available.length, 10))];
+      const craft = document.getElementById('craft-area');
+      const rect = craft.getBoundingClientRect();
+      const cx = rect.width / 2, cy = rect.height / 2;
+      const a = CE.spawn(pick[0], cx - 130, cy - 30);
+      const b = CE.spawn(pick[1], cx + 30,  cy - 30);
+      [a, b].forEach(obj => {
+        if (!obj) return;
+        obj.el.style.transition = 'box-shadow .3s';
+        obj.el.style.boxShadow = '0 0 30px 10px rgba(255,215,0,.95)';
+        setTimeout(() => { if (obj.el) obj.el.style.boxShadow = ''; }, 2500);
+      });
+      const e0 = ELEMENTS[pick[0]], e1 = ELEMENTS[pick[1]];
+      setTimeout(() => showCombo(`💡 Try: ${e0.emoji} + ${e1.emoji} → ?`, '#ffe066'), 400);
+    }
+    save();
+  });
+
+  // Re-enable the button after a short delay regardless of outcome
+  setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }, 1500);
+};
+
+// ============================================================
+//  PHASER BOILERPLATE  (16:9 responsive canvas + touch controls)
+//  Used here as the underlying game engine for touch input
+// ============================================================
+class TouchControlScene extends Phaser.Scene {
+  constructor() { super({ key: 'TouchControl' }); }
+  preload() {}
+  create() {
+    // Register pointer events for mobile touch → forward to craft engine
+    this.input.on('pointerdown', (ptr) => {
+      if (window.CE) {
+        const craft = document.getElementById('craft-area');
+        const r = craft.getBoundingClientRect();
+        // Convert Phaser pointer to DOM coordinates
+        const x = (ptr.x / this.scale.width) * r.width;
+        const y = (ptr.y / this.scale.height) * r.height;
+        window._phaserTouchDown && window._phaserTouchDown(x, y);
+      }
+    });
+    this.input.on('pointermove', (ptr) => {
+      if (ptr.isDown && window._phaserTouchMove) {
+        const craft = document.getElementById('craft-area');
+        const r = craft.getBoundingClientRect();
+        const x = (ptr.x / this.scale.width) * r.width;
+        const y = (ptr.y / this.scale.height) * r.height;
+        window._phaserTouchMove(x, y);
+      }
+    });
+    this.input.on('pointerup', () => {
+      window._phaserTouchUp && window._phaserTouchUp();
+    });
+  }
+  update() {}
+}
+
+// Phaser runs hidden, just for touch normalization
+const phaserConfig = {
+  type: Phaser.AUTO,
+  width: 1280,
+  height: 720,
+  transparent: true,
+  parent: 'craft-area',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720,
+  },
+  input: { touch: { capture: false } },
+  scene: [TouchControlScene],
+  dom: { createContainer: false },
+};
+
+// ============================================================
+//  ANTI-HACK
+// ============================================================
+const _SIG = btoa('ie_v3_poki');
+let _sh = '';
+function _hash(c,d){return btoa(String(Math.floor(c))+'|'+d.size+'|'+_SIG);}
+function _verify(){
+  if(_sh&&_sh!==_hash(GS.coins,GS.discovered)){
+    GS.coins=0;GS.discovered=new Set(STARTERS);
+    _sh=_hash(GS.coins,GS.discovered);
+    updateCoinUI();renderList();
+  }
+}
+Object.defineProperty(window,'_gc',{set:()=>{},get:()=>0});
+setInterval(_verify,8000);
+
+// ============================================================
+//  ELEMENT DATABASE  (200+ elements)
+// ============================================================
+const STARTERS=['fire','water','earth','wind'];
+
+const ELEMENTS={
+  fire:{emoji:'🔥',name:'Fire',cat:'starter'},water:{emoji:'💧',name:'Water',cat:'starter'},
+  earth:{emoji:'🌍',name:'Earth',cat:'starter'},wind:{emoji:'💨',name:'Wind',cat:'starter'},
+  lava:{emoji:'🌋',name:'Lava',cat:'nature'},steam:{emoji:'♨️',name:'Steam',cat:'nature'},
+  dust:{emoji:'🌫️',name:'Dust',cat:'nature'},mud:{emoji:'🟫',name:'Mud',cat:'nature'},
+  plant:{emoji:'🌿',name:'Plant',cat:'nature'},tree:{emoji:'🌳',name:'Tree',cat:'nature'},
+  forest:{emoji:'🌲',name:'Forest',cat:'nature'},ocean:{emoji:'🌊',name:'Ocean',cat:'nature'},
+  rain:{emoji:'🌧️',name:'Rain',cat:'nature'},cloud:{emoji:'☁️',name:'Cloud',cat:'nature'},
+  storm:{emoji:'⛈️',name:'Storm',cat:'nature'},snow:{emoji:'❄️',name:'Snow',cat:'nature'},
+  ice:{emoji:'🧊',name:'Ice',cat:'nature'},sand:{emoji:'🏜️',name:'Sand',cat:'nature'},
+  stone:{emoji:'🪨',name:'Stone',cat:'nature'},glass:{emoji:'🫙',name:'Glass',cat:'nature'},
+  mountain:{emoji:'⛰️',name:'Mountain',cat:'nature'},volcano:{emoji:'🌋',name:'Volcano',cat:'nature'},
+  smoke:{emoji:'💨',name:'Smoke',cat:'nature'},ash:{emoji:'🌫️',name:'Ash',cat:'nature'},
+  swamp:{emoji:'🐊',name:'Swamp',cat:'nature'},flower:{emoji:'🌸',name:'Flower',cat:'nature'},
+  fruit:{emoji:'🍎',name:'Fruit',cat:'nature'},seed:{emoji:'🌱',name:'Seed',cat:'nature'},
+  pollen:{emoji:'🤧',name:'Pollen',cat:'nature'},mushroom:{emoji:'🍄',name:'Mushroom',cat:'nature'},
+  wave:{emoji:'🌊',name:'Wave',cat:'nature'},tsunami:{emoji:'🌊',name:'Tsunami',cat:'nature'},
+  tornado:{emoji:'🌪️',name:'Tornado',cat:'nature'},lightning:{emoji:'⚡',name:'Lightning',cat:'nature'},
+  rainbow:{emoji:'🌈',name:'Rainbow',cat:'nature'},crystal:{emoji:'💎',name:'Crystal',cat:'nature'},
+  cave:{emoji:'🕳️',name:'Cave',cat:'nature'},geyser:{emoji:'💦',name:'Geyser',cat:'nature'},
+  fossil:{emoji:'🦴',name:'Fossil',cat:'nature'},coral:{emoji:'🪸',name:'Coral',cat:'nature'},
+  reef:{emoji:'🐠',name:'Reef',cat:'nature'},tundra:{emoji:'🌨️',name:'Tundra',cat:'nature'},
+  jungle:{emoji:'🌴',name:'Jungle',cat:'nature'},desert:{emoji:'🌵',name:'Desert',cat:'nature'},
+  savanna:{emoji:'🦁',name:'Savanna',cat:'nature'},glacier:{emoji:'🏔️',name:'Glacier',cat:'nature'},
+  canyon:{emoji:'🏜️',name:'Canyon',cat:'nature'},waterfall:{emoji:'💧',name:'Waterfall',cat:'nature'},
+  hot_spring:{emoji:'♨️',name:'Hot Spring',cat:'nature'},amber:{emoji:'🟠',name:'Amber',cat:'nature'},
+  life:{emoji:'❤️',name:'Life',cat:'human'},human:{emoji:'🧑',name:'Human',cat:'human'},
+  village:{emoji:'🏘️',name:'Village',cat:'human'},city:{emoji:'🏙️',name:'City',cat:'human'},
+  house:{emoji:'🏠',name:'House',cat:'human'},tool:{emoji:'🔧',name:'Tool',cat:'human'},
+  wheel:{emoji:'⚙️',name:'Wheel',cat:'human'},food:{emoji:'🍖',name:'Food',cat:'human'},
+  bread:{emoji:'🍞',name:'Bread',cat:'human'},beer:{emoji:'🍺',name:'Beer',cat:'human'},
+  art:{emoji:'🎨',name:'Art',cat:'human'},music:{emoji:'🎵',name:'Music',cat:'human'},
+  story:{emoji:'📖',name:'Story',cat:'human'},magic:{emoji:'✨',name:'Magic',cat:'human'},
+  potion:{emoji:'🧪',name:'Potion',cat:'human'},weapon:{emoji:'⚔️',name:'Weapon',cat:'human'},
+  knight:{emoji:'🛡️',name:'Knight',cat:'human'},castle:{emoji:'🏰',name:'Castle',cat:'human'},
+  dragon:{emoji:'🐉',name:'Dragon',cat:'human'},gold:{emoji:'🥇',name:'Gold',cat:'human'},
+  gem:{emoji:'💎',name:'Gem',cat:'human'},phoenix:{emoji:'🦅',name:'Phoenix',cat:'human'},
+  unicorn:{emoji:'🦄',name:'Unicorn',cat:'human'},library:{emoji:'📚',name:'Library',cat:'human'},
+  science:{emoji:'🔬',name:'Science',cat:'human'},alchemy:{emoji:'⚗️',name:'Alchemy',cat:'human'},
+  witch:{emoji:'🧙',name:'Witch',cat:'human'},wizard:{emoji:'🧙‍♂️',name:'Wizard',cat:'human'},
+  vampire:{emoji:'🧛',name:'Vampire',cat:'human'},zombie:{emoji:'🧟',name:'Zombie',cat:'human'},
+  mermaid:{emoji:'🧜',name:'Mermaid',cat:'human'},ninja:{emoji:'🥷',name:'Ninja',cat:'human'},
+  samurai:{emoji:'⚔️',name:'Samurai',cat:'human'},pirate:{emoji:'🏴‍☠️',name:'Pirate',cat:'human'},
+  king:{emoji:'👑',name:'King',cat:'human'},empire:{emoji:'🗺️',name:'Empire',cat:'human'},
+  civilization:{emoji:'🏛️',name:'Civilization',cat:'human'},mythology:{emoji:'🏛️',name:'Mythology',cat:'human'},
+  war:{emoji:'💣',name:'War',cat:'human'},peace:{emoji:'☮️',name:'Peace',cat:'human'},
+  philosophy:{emoji:'🤔',name:'Philosophy',cat:'human'},democracy:{emoji:'🗳️',name:'Democracy',cat:'human'},
+  money:{emoji:'💰',name:'Money',cat:'human'},religion:{emoji:'⛪',name:'Religion',cat:'human'},
+  festival:{emoji:'🎉',name:'Festival',cat:'human'},medicine:{emoji:'💊',name:'Medicine',cat:'human'},
+  school:{emoji:'🏫',name:'School',cat:'human'},hospital:{emoji:'🏥',name:'Hospital',cat:'human'},
+  factory:{emoji:'🏭',name:'Factory',cat:'human'},golem:{emoji:'🗿',name:'Golem',cat:'human'},
+  werewolf:{emoji:'🐺',name:'Werewolf',cat:'human'},plague:{emoji:'☠️',name:'Plague',cat:'human'},
+  metal:{emoji:'⚙️',name:'Metal',cat:'tech'},engine:{emoji:'🚗',name:'Engine',cat:'tech'},
+  electricity:{emoji:'⚡',name:'Electricity',cat:'tech'},computer:{emoji:'💻',name:'Computer',cat:'tech'},
+  internet:{emoji:'🌐',name:'Internet',cat:'tech'},robot:{emoji:'🤖',name:'Robot',cat:'tech'},
+  ai:{emoji:'🧠',name:'AI',cat:'tech'},rocket:{emoji:'🚀',name:'Rocket',cat:'tech'},
+  satellite:{emoji:'🛰️',name:'Satellite',cat:'tech'},nuclear:{emoji:'☢️',name:'Nuclear',cat:'tech'},
+  laser:{emoji:'🔴',name:'Laser',cat:'tech'},nanobot:{emoji:'🔬',name:'Nanobot',cat:'tech'},
+  matrix:{emoji:'💊',name:'Matrix',cat:'tech'},virus:{emoji:'🦠',name:'Virus',cat:'tech'},
+  blockchain:{emoji:'₿',name:'Blockchain',cat:'tech'},car:{emoji:'🚗',name:'Car',cat:'tech'},
+  airplane:{emoji:'✈️',name:'Airplane',cat:'tech'},ship:{emoji:'🚢',name:'Ship',cat:'tech'},
+  submarine:{emoji:'🤿',name:'Submarine',cat:'tech'},phone:{emoji:'📱',name:'Phone',cat:'tech'},
+  battery:{emoji:'🔋',name:'Battery',cat:'tech'},solar_panel:{emoji:'🌞',name:'Solar Panel',cat:'tech'},
+  wind_turbine:{emoji:'💨',name:'Wind Turbine',cat:'tech'},cyborg:{emoji:'🦾',name:'Cyborg',cat:'tech'},
+  drone:{emoji:'🛸',name:'Drone',cat:'tech'},vr:{emoji:'🥽',name:'VR',cat:'tech'},
+  quantum:{emoji:'⚛️',name:'Quantum',cat:'tech'},singularity:{emoji:'🌀',name:'Singularity',cat:'tech'},
+  megacity:{emoji:'🌆',name:'Megacity',cat:'tech'},cyberpunk:{emoji:'🤖',name:'Cyberpunk',cat:'tech'},
+  chemistry:{emoji:'⚗️',name:'Chemistry',cat:'tech'},explosion:{emoji:'💥',name:'Explosion',cat:'tech'},
+  vaccine:{emoji:'💉',name:'Vaccine',cat:'tech'},social_media:{emoji:'📱',name:'Social Media',cat:'tech'},
+  planet:{emoji:'🪐',name:'Planet',cat:'cosmic'},sun:{emoji:'☀️',name:'Sun',cat:'cosmic'},
+  moon:{emoji:'🌙',name:'Moon',cat:'cosmic'},star:{emoji:'⭐',name:'Star',cat:'cosmic'},
+  galaxy:{emoji:'🌌',name:'Galaxy',cat:'cosmic'},blackhole:{emoji:'🕳️',name:'Black Hole',cat:'cosmic'},
+  universe:{emoji:'🌠',name:'Universe',cat:'cosmic'},nebula:{emoji:'🌌',name:'Nebula',cat:'cosmic'},
+  comet:{emoji:'☄️',name:'Comet',cat:'cosmic'},supernova:{emoji:'💥',name:'Supernova',cat:'cosmic'},
+  cosmos:{emoji:'🌟',name:'Cosmos',cat:'cosmic'},time:{emoji:'⏳',name:'Time',cat:'cosmic'},
+  dimension:{emoji:'🔮',name:'Dimension',cat:'cosmic'},infinity:{emoji:'∞',name:'Infinity',cat:'cosmic'},
+  wormhole:{emoji:'🌀',name:'Wormhole',cat:'cosmic'},quasar:{emoji:'💫',name:'Quasar',cat:'cosmic'},
+  dark_matter:{emoji:'🌑',name:'Dark Matter',cat:'cosmic'},neutron_star:{emoji:'💠',name:'Neutron Star',cat:'cosmic'},
+  antimatter:{emoji:'⚛️',name:'Antimatter',cat:'cosmic'},void:{emoji:'🌑',name:'Void',cat:'cosmic'},
+  multiverse:{emoji:'🔯',name:'Multiverse',cat:'cosmic'},god:{emoji:'🌟',name:'God',cat:'cosmic'},
+  big_bang:{emoji:'💥',name:'Big Bang',cat:'cosmic'},omega:{emoji:'Ω',name:'Omega',cat:'cosmic'},
+  dream:{emoji:'💭',name:'Dream',cat:'cosmic'},time_travel:{emoji:'⏰',name:'Time Travel',cat:'cosmic'},
+  quantum_computer:{emoji:'💻',name:'Quantum Computer',cat:'tech'},
+  rust:{emoji:'🟤',name:'Rust',cat:'nature'},light:{emoji:'💡',name:'Light',cat:'tech'},
+  fish:{emoji:'🐟',name:'Fish',cat:'nature'},wolf:{emoji:'🐺',name:'Wolf',cat:'nature'},
+  lion:{emoji:'🦁',name:'Lion',cat:'nature'},dinosaur:{emoji:'🦖',name:'Dinosaur',cat:'nature'},
+  evolution:{emoji:'🧬',name:'Evolution',cat:'nature'},flood:{emoji:'🌊',name:'Flood',cat:'nature'},
+  night:{emoji:'🌃',name:'Night',cat:'nature'},tide:{emoji:'🌊',name:'Tide',cat:'nature'},
+  darkness:{emoji:'🌑',name:'Darkness',cat:'cosmic'},shadow:{emoji:'👥',name:'Shadow',cat:'human'},
+  history:{emoji:'📜',name:'History',cat:'human'},energy:{emoji:'⚡',name:'Energy',cat:'cosmic'},
+  matter:{emoji:'⚛️',name:'Matter',cat:'cosmic'},oasis:{emoji:'🌴',name:'Oasis',cat:'nature'},
+  prehistoric:{emoji:'🦕',name:'Prehistoric',cat:'nature'},health:{emoji:'🏥',name:'Health',cat:'human'},
+  immunity:{emoji:'🛡️',name:'Immunity',cat:'tech'},influencer:{emoji:'🌟',name:'Influencer',cat:'human'},
+  celebrity:{emoji:'🎬',name:'Celebrity',cat:'human'},hot_spring2:{emoji:'♨️',name:'Spa',cat:'human'},
+  locomotive:{emoji:'🚂',name:'Locomotive',cat:'tech'},string_theory:{emoji:'🧵',name:'String Theory',cat:'cosmic'},
+  crown:{emoji:'👑',name:'Crown',cat:'human'},compass:{emoji:'🧭',name:'Compass',cat:'human'},
+  wood:{emoji:'🪵',name:'Wood',cat:'nature'},ancient:{emoji:'🏛️',name:'Ancient',cat:'human'},
+  death:{emoji:'💀',name:'Death',cat:'human'},myth:{emoji:'🏺',name:'Myth',cat:'human'},
+  river:{emoji:'🏞️',name:'River',cat:'nature'},mineral:{emoji:'💎',name:'Mineral',cat:'nature'},
+  astronomy:{emoji:'🔭',name:'Astronomy',cat:'cosmic'},superconductor:{emoji:'⚛️',name:'Superconductor',cat:'tech'},
+};
+
+// ============================================================
+//  RECIPES  (400+ combos)
+// ============================================================
+const RECIPES=[
+  // SELF-COMBOS
+  ['fire','fire','lava'],['water','water','ocean'],['earth','earth','mountain'],['wind','wind','storm'],
+  ['lava','lava','volcano'],['stone','stone','crystal'],['storm','storm','tornado'],['cloud','cloud','rain'],
+  ['sand','sand','desert'],['tree','tree','forest'],['human','human','village'],['village','village','city'],
+  ['city','city','megacity'],['star','star','galaxy'],['galaxy','galaxy','universe'],['planet','planet','galaxy'],
+  ['ai','ai','singularity'],['robot','robot','cyborg'],['dimension','dimension','multiverse'],
+  ['magic','magic','alchemy'],['dragon','dragon','mythology'],['crystal','crystal','gem'],
+  ['wave','wave','tsunami'],['seed','seed','plant'],['mushroom','mushroom','forest'],
+  ['lightning','lightning','electricity'],['ice','ice','glacier'],['snow','snow','tundra'],
+  ['computer','computer','internet'],['internet','internet','matrix'],
+  ['blackhole','blackhole','void'],['supernova','supernova','big_bang'],
+  ['universe','universe','multiverse'],['multiverse','multiverse','omega'],
+  ['science','science','quantum'],['weapon','weapon','war'],['war','war','empire'],
+  ['knight','knight','castle'],['king','king','empire'],['gold','gold','gem'],
+  ['void','void','omega'],['nebula','nebula','galaxy'],['comet','comet','supernova'],
+  ['coral','coral','reef'],['flower','flower','pollen'],['blockchain','blockchain','quantum'],
+  ['nanobot','nanobot','singularity'],['quantum_computer','quantum_computer','singularity'],
+  ['factory','factory','megacity'],['money','money','empire'],
+  // FIRE
+  ['fire','water','steam'],['fire','earth','lava'],['fire','wind','smoke'],
+  ['fire','sand','glass'],['fire','stone','metal'],['fire','plant','ash'],['fire','tree','ash'],
+  ['fire','ice','water'],['fire','magic','phoenix'],['fire','phoenix','supernova'],
+  ['fire','star','sun'],['fire','lava','volcano'],['fire','human','food'],['fire','food','bread'],
+  ['fire','seed','potion'],['fire','metal','lava'],['fire','dragon','phoenix'],
+  ['fire','rain','steam'],['fire','forest','ash'],['fire','wood','ash'],
+  // WATER
+  ['water','earth','mud'],['water','fire','steam'],['water','wind','wave'],['water','wind','cloud'],
+  ['water','cloud','rain'],['water','plant','swamp'],['water','mud','swamp'],['water','sand','mud'],
+  ['water','seed','plant'],['water','stone','ocean'],['water','ocean','tsunami'],
+  ['water','steam','cloud'],['water','life','human'],['water','electricity','lightning'],
+  ['water','stone','waterfall'],['water','mountain','waterfall'],['water','lava','stone'],
+  ['water','lava','geyser'],['water','coral','reef'],['water','metal','rust'],
+  // EARTH
+  ['earth','wind','dust'],['earth','wind','sand'],['earth','fire','lava'],['earth','water','mud'],
+  ['earth','plant','forest'],['earth','tree','forest'],['earth','stone','mountain'],
+  ['earth','mountain','volcano'],['earth','life','plant'],['earth','metal','stone'],
+  ['earth','human','village'],['earth','time','fossil'],['earth','fire','desert'],
+  ['earth','rain','jungle'],['earth','ice','tundra'],['earth','wind','canyon'],
+  ['earth','crystal','cave'],['earth','lava','crystal'],
+  // WIND
+  ['wind','water','wave'],['wind','fire','smoke'],['wind','earth','dust'],
+  ['wind','cloud','storm'],['wind','storm','tornado'],['wind','seed','pollen'],
+  ['wind','pollen','flower'],['wind','music','story'],['wind','sand','desert'],
+  ['wind','snow','tundra'],['wind','forest','pollen'],['wind','mountain','canyon'],
+  ['wind','electricity','wind_turbine'],
+  // NATURE CHAINS
+  ['mud','seed','plant'],['mud','water','swamp'],['plant','sun','fruit'],['plant','time','tree'],
+  ['plant','water','flower'],['plant','earth','forest'],['plant','rain','mushroom'],
+  ['tree','fire','ash'],['tree','wind','forest'],['forest','human','village'],
+  ['forest','rain','jungle'],['sand','fire','glass'],['sand','water','mud'],
+  ['stone','fire','metal'],['stone','metal','tool'],['stone','human','tool'],
+  ['ice','fire','water'],['ice','wind','snow'],['snow','sun','water'],
+  ['rain','sun','rainbow'],['cloud','lightning','storm'],['smoke','cloud','storm'],
+  ['ash','water','mud'],['crystal','fire','gem'],['crystal','magic','gem'],
+  ['geyser','mineral','hot_spring'],['fossil','science','evolution'],
+  ['jungle','ancient','mythology'],['desert','water','oasis'],
+  ['glacier','sun','flood'],['coral','sun','reef'],['reef','fish','ocean'],
+  ['canyon','river','waterfall'],['amber','fossil','prehistoric'],
+  ['lava','water','stone'],['lava','wind','ash'],['lava','stone','volcano'],
+  // HUMAN
+  ['life','earth','human'],['life','fire','phoenix'],['life','magic','unicorn'],
+  ['life','water','human'],['life','plant','mushroom'],['life','star','human'],
+  ['human','fire','food'],['human','tool','wheel'],['human','wheel','engine'],
+  ['human','village','city'],['human','city','castle'],['human','art','music'],
+  ['human','music','story'],['human','story','magic'],['human','magic','potion'],
+  ['human','potion','dragon'],['human','weapon','knight'],['human','knight','castle'],
+  ['human','gold','gem'],['human','bread','beer'],['human','metal','weapon'],
+  ['human','dragon','knight'],['human','science','medicine'],['human','medicine','hospital'],
+  ['human','school','science'],['human','library','school'],['human','religion','myth'],
+  ['human','philosophy','religion'],['human','alchemy','potion'],['human','time','history'],
+  ['human','magic','wizard'],['human','darkness','vampire'],['human','moon','werewolf'],
+  ['human','water','mermaid'],['human','ninja','samurai'],['human','ship','pirate'],
+  ['human','compass','explorer'],['human','crown','king'],['village','human','city'],
+  ['city','electricity','computer'],['city','computer','internet'],['city','money','bank'],
+  ['city','factory','megacity'],['castle','magic','gem'],['library','science','philosophy'],
+  ['science','alchemy','chemistry'],['science','electricity','computer'],
+  ['science','telescope','astronomy'],['alchemy','fire','explosion'],
+  ['potion','life','unicorn'],['witch','potion','alchemy'],['witch','fire','alchemy'],
+  ['wizard','dragon','mythology'],['vampire','night','darkness'],
+  ['werewolf','moon','night'],['zombie','death','plague'],['mermaid','ocean','coral'],
+  ['golem','magic','dragon'],['ninja','shadow','darkness'],['samurai','knight','honor'],
+  ['pirate','ship','ocean'],['king','castle','empire'],['knight','dragon','castle'],
+  ['war','human','empire'],['democracy','civilization','peace'],
+  ['philosophy','god','religion'],['mythology','dragon','god'],
+  // TECH
+  ['metal','fire','lava'],['metal','stone','tool'],['metal','electricity','engine'],
+  ['engine','fire','rocket'],['engine','wheel','car'],['electricity','water','lightning'],
+  ['electricity','fire','laser'],['electricity','metal','robot'],['electricity','glass','light'],
+  ['computer','robot','ai'],['computer','internet','matrix'],['computer','virus','matrix'],
+  ['internet','ai','blockchain'],['robot','ai','nanobot'],['rocket','earth','satellite'],
+  ['rocket','fire','supernova'],['rocket','planet','moon'],['nuclear','fire','supernova'],
+  ['laser','gem','rainbow'],['laser','robot','cyborg'],['car','engine','car'],
+  ['battery','electricity','phone'],['phone','internet','social_media'],
+  ['solar_panel','electricity','battery'],['medicine','virus','vaccine'],
+  ['cyborg','ai','singularity'],['drone','ai','robot'],['vr','computer','matrix'],
+  ['quantum','computer','quantum_computer'],['quantum','physics','string_theory'],
+  ['singularity','ai','god'],['megacity','tech','cyberpunk'],
+  ['chemistry','fire','explosion'],['chemistry','water','medicine'],
+  ['social_media','human','influencer'],['influencer','money','celebrity'],
+  ['cyberpunk','ai','singularity'],['explosion','fire','nuclear'],
+  ['explosion','war','empire'],
+  // COSMIC
+  ['star','fire','sun'],['sun','earth','planet'],['sun','water','life'],
+  ['sun','moon','tide'],['planet','water','ocean'],['moon','human','myth'],
+  ['comet','earth','volcano'],['nebula','star','galaxy'],['supernova','galaxy','blackhole'],
+  ['blackhole','time','dimension'],['blackhole','star','neutron_star'],
+  ['dimension','magic','wormhole'],['wormhole','time','time_travel'],
+  ['universe','time','dimension'],['universe','life','cosmos'],
+  ['cosmos','infinity','omega'],['dark_matter','blackhole','void'],
+  ['dark_matter','star','neutron_star'],['antimatter','matter','supernova'],
+  ['quasar','galaxy','blackhole'],['neutron_star','blackhole','void'],
+  ['void','cosmos','omega'],['omega','infinity','god'],['big_bang','void','universe'],
+  ['god','universe','cosmos'],['time_travel','human','civilization'],
+  ['string_theory','dimension','multiverse'],['quantum_computer','ai','singularity'],
+  // MISC
+  ['magic','fire','phoenix'],['magic','water','potion'],['magic','earth','unicorn'],
+  ['magic','wind','story'],['magic','star','cosmos'],['magic','dragon','gem'],
+  ['magic','human','wizard'],['magic','stone','golem'],['magic','lightning','storm'],
+  ['rainbow','unicorn','cosmos'],['rainbow','cloud','cosmos'],['gold','fire','sun'],
+  ['gold','gem','laser'],['sun','moon','planet'],['volcano','water','steam'],
+  ['tornado','fire','storm'],['storm','mountain','volcano'],
+  ['time','human','story'],['time','earth','fossil'],['time','star','supernova'],
+  ['rainbow','unicorn','cosmos'],['hot_spring','human','hot_spring2'],
+  ['oasis','life','civilization'],['prehistoric','life','dinosaur'],
+  ['dinosaur','volcano','fossil'],['evolution','time','human'],
+  ['plague','war','zombie'],['immunity','life','health'],
+  ['health','science','hospital'],['flood','rain','tsunami'],
+  ['matter','energy','supernova'],['energy','human','civilization'],
+  ['rust','water','metal'],['light','crystal','rainbow'],
+  ['night','moon','dream'],['dream','magic','dimension'],
+  ['darkness','light','shadow'],['shadow','ninja','darkness'],
+  ['tide','moon','ocean'],['fish','ocean','reef'],
+  ['wolf','moon','werewolf'],['lion','savanna','king'],
+  ['dinosaur','time','fossil'],
+];
+
+// Extra elements needed by recipes
+const EXTRA_EL = {
+  honor:{emoji:'🎖️',name:'Honor',cat:'human'},explorer:{emoji:'🧭',name:'Explorer',cat:'human'},
+  philosophy:{emoji:'🤔',name:'Philosophy',cat:'human'},bank:{emoji:'🏦',name:'Bank',cat:'human'},
+  tech:{emoji:'⚙️',name:'Tech',cat:'tech'},telescope:{emoji:'🔭',name:'Telescope',cat:'tech'},
+  physics:{emoji:'📐',name:'Physics',cat:'tech'},ancient:{emoji:'🏛️',name:'Ancient',cat:'human'},
+  civilization:{emoji:'🗺️',name:'Civilization',cat:'human'},energy:{emoji:'⚡',name:'Energy',cat:'cosmic'},
+};
+Object.assign(ELEMENTS, EXTRA_EL);
+
+// ============================================================
+//  BACKGROUNDS  (16 total, all interactive)
+// ============================================================
+const BACKGROUNDS=[
+  {id:'space',name:'Deep Space',emoji:'🌌',desc:'Parallax stars & nebulae',price:0,owned:true,
+   colors:['#000010','#050018','#000008'],interact:'Click to create star bursts',
+   interactFn:'starBurst',unlockAt:null},
+  {id:'space_light',name:'Light Cosmos',emoji:'☀️',desc:'Bright nebulae on white — soft & airy',price:0,owned:true,
+   colors:['#f8f8ff','#eef0ff','#f0f4ff'],interact:'Click to create sparkle bursts',
+   interactFn:'sparkBurst',unlockAt:null},
+  {id:'lava',name:'Lava World',emoji:'🌋',desc:'Click to send lava ripples',price:150,owned:false,
+   colors:['#1a0000','#3a0800','#0d0000'],interact:'Click to ripple lava',
+   interactFn:'lavaRipple',unlockAt:'volcano'},
+  {id:'ocean',name:'Deep Ocean',emoji:'🌊',desc:'Click to summon whirlpools',price:150,owned:false,
+   colors:['#000d1a','#001428','#000509'],interact:'Click to spawn whirlpools',
+   interactFn:'whirlpool',unlockAt:'ocean'},
+  {id:'forest',name:'Enchanted Forest',emoji:'🌲',desc:'Click to bloom flowers',price:200,owned:false,
+   colors:['#011400','#061a00','#000d00'],interact:'Click to bloom flowers',
+   interactFn:'bloom',unlockAt:'forest'},
+  {id:'galaxy',name:'Galaxy Core',emoji:'🌀',desc:'Click to fire star trails',price:300,owned:false,
+   colors:['#040010','#080025','#020008'],interact:'Click to fire star trails',
+   interactFn:'starTrail',unlockAt:'galaxy'},
+  {id:'matrix',name:'The Matrix',emoji:'💊',desc:'Click to scatter code',price:400,owned:false,
+   colors:['#000300','#001200','#000800'],interact:'Click to scatter code',
+   interactFn:'codeScatter',unlockAt:'matrix'},
+  {id:'cosmos',name:'Cosmic Void',emoji:'🌟',desc:'Click to release cosmic rays',price:600,owned:false,
+   colors:['#000005','#050020','#020010'],interact:'Click to release cosmic rays',
+   interactFn:'cosmicRay',unlockAt:'cosmos'},
+  {id:'infinity',name:'Infinite Realm',emoji:'∞',desc:'Click to twist dimensions',price:1000,owned:false,
+   colors:['#020010','#100020','#050015'],interact:'Click to twist dimensions',
+   interactFn:'dimensionTwist',unlockAt:'infinity'},
+  {id:'aurora',name:'Aurora Borealis',emoji:'🌈',desc:'Click to ripple aurora waves',price:250,owned:false,
+   colors:['#001a10','#002a15','#001008'],interact:'Click to ripple aurora',
+   interactFn:'auroraPulse',unlockAt:'rainbow'},
+  {id:'desert',name:'Scorched Desert',emoji:'🏜️',desc:'Click to spawn sandstorms',price:200,owned:false,
+   colors:['#1a0d00','#2a1400','#140800'],interact:'Click to spawn sandstorm',
+   interactFn:'sandStorm',unlockAt:'desert'},
+  {id:'tundra',name:'Frozen Tundra',emoji:'❄️',desc:'Click to shatter ice',price:200,owned:false,
+   colors:['#050a14','#080f1e','#030708'],interact:'Click to shatter ice crystals',
+   interactFn:'iceShatter',unlockAt:'tundra'},
+  {id:'volcano_bg',name:'Volcanic Eruption',emoji:'🌋',desc:'Click to erupt lava bombs',price:350,owned:false,
+   colors:['#1a0500','#2d0800','#0d0200'],interact:'Click to erupt lava bombs',
+   interactFn:'lavaBomb',unlockAt:'supernova'},
+  {id:'cyberpunk_bg',name:'Cyberpunk City',emoji:'🌆',desc:'Click to trigger neon pulses',price:500,owned:false,
+   colors:['#000520','#000830','#000212'],interact:'Click to trigger neon pulses',
+   interactFn:'neonPulse',unlockAt:'cyberpunk'},
+  {id:'dream',name:'Dreamscape',emoji:'💭',desc:'Click to spawn dream bubbles',price:450,owned:false,
+   colors:['#0a0025','#150035','#050012'],interact:'Click to spawn dream bubbles',
+   interactFn:'dreamBubble',unlockAt:'dream'},
+  {id:'heaven',name:'Divine Realm',emoji:'✨',desc:'Click to send divine rays',price:800,owned:false,
+   colors:['#1a1500','#2a2000','#0d0a00'],interact:'Click to send divine rays',
+   interactFn:'divineRay',unlockAt:'god'},
+  {id:'omega_bg',name:'Omega End',emoji:'Ω',desc:'Click to collapse reality',price:2000,owned:false,
+   colors:['#000000','#050005','#000000'],interact:'Click to collapse reality',
+   interactFn:'realityCollapse',unlockAt:'omega'},
+];
+
+// ============================================================
+//  MUSIC
+// ============================================================
+const MUSIC_TRACKS=[
+  {id:'cosmic_drift',name:'Cosmic Drift',emoji:'🌌',desc:'Ambient space',price:0,owned:true,preset:'ambient'},
+  {id:'forge_beat',name:'Forge Beat',emoji:'🔥',desc:'Dark electronic',price:80,owned:false,preset:'electronic'},
+  {id:'deep_ocean',name:'Ocean Depths',emoji:'🌊',desc:'Underwater calm',price:80,owned:false,preset:'ocean'},
+  {id:'forest_spirits',name:'Forest Spirits',emoji:'🌲',desc:'Mystical nature',price:100,owned:false,preset:'forest'},
+  {id:'neon_city',name:'Neon City',emoji:'🌆',desc:'Cyberpunk synthwave',price:150,owned:false,preset:'synthwave'},
+  {id:'galactic_war',name:'Galactic War',emoji:'⚔️',desc:'Epic orchestral',price:200,owned:false,preset:'epic'},
+  {id:'void_pulse',name:'Void Pulse',emoji:'🕳️',desc:'Dark ambient drones',price:150,owned:false,preset:'dark'},
+  {id:'divine_choir',name:'Divine Choir',emoji:'✨',desc:'Celestial harmonics',price:300,owned:false,preset:'divine'},
+];
+
+// ============================================================
+//  GAME STATE
+// ============================================================
+const GS={
+  coins:0,discovered:new Set(STARTERS),newDisc:new Set(),
+  activeBg:'space',ownedBgs:new Set(['space']),
+  ownedMusic:new Set(['cosmic_drift']),activeMusic:'cosmic_drift',
+  musicPlaying:true,activeFilter:'all',searchQ:'',
+  doubleCoinsLeft:0,customElements:[],aiElements:[],
+  customBgs:[],         // [{id, name, emoji, dataUrl}]
+  // ── SETTINGS ──
+  musicVol:0.25,
+  hintsOn:true,
+  failEmojisOn:true,
+  bgInteractOn:true,
+};
+
+function save(){
+  try{
+    const d={c:GS.coins,disc:[...GS.discovered],nd:[...GS.newDisc],
+      abg:GS.activeBg,obgs:[...GS.ownedBgs],omus:[...GS.ownedMusic],
+      amus:GS.activeMusic,dcl:GS.doubleCoinsLeft,
+      ce:GS.customElements,ae:GS.aiElements,
+      vol:GS.musicVol,ho:GS.hintsOn,fe:GS.failEmojisOn,bi:GS.bgInteractOn,
+      cbg:GS.customBgs.map(b=>({id:b.id,name:b.name,emoji:b.emoji}))};
+    localStorage.setItem('ie6',btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
+    // Store image data separately (can be large)
+    GS.customBgs.forEach(b=>{
+      try{localStorage.setItem('ie6_bg_'+b.id,b.dataUrl);}catch(e){}
+    });
+  }catch(e){}
+}
+function load(){
+  try{
+    const r=localStorage.getItem('ie6');
+    if(!r)return;
+    const d=JSON.parse(decodeURIComponent(escape(atob(r))));
+    if(typeof d.c==='number')GS.coins=Math.max(0,Math.floor(d.c));
+    if(Array.isArray(d.disc))d.disc.forEach(k=>{if(ELEMENTS[k])GS.discovered.add(k);});
+    if(Array.isArray(d.nd))d.nd.forEach(k=>{if(ELEMENTS[k])GS.newDisc.add(k);});
+    if(d.abg)GS.activeBg=d.abg;
+    if(Array.isArray(d.obgs))d.obgs.forEach(id=>{if(BACKGROUNDS.find(b=>b.id===id))GS.ownedBgs.add(id);});
+    if(Array.isArray(d.omus))d.omus.forEach(id=>{if(MUSIC_TRACKS.find(m=>m.id===id))GS.ownedMusic.add(id);});
+    if(d.amus)GS.activeMusic=d.amus;
+    if(typeof d.dcl==='number')GS.doubleCoinsLeft=d.dcl;
+    if(typeof d.vol==='number')GS.musicVol=Math.max(0,Math.min(1,d.vol));
+    if(typeof d.ho==='boolean')GS.hintsOn=d.ho;
+    if(typeof d.fe==='boolean')GS.failEmojisOn=d.fe;
+    if(typeof d.bi==='boolean')GS.bgInteractOn=d.bi;
+    if(Array.isArray(d.cbg)){
+      d.cbg.forEach(b=>{
+        const dataUrl=localStorage.getItem('ie6_bg_'+b.id)||'';
+        if(dataUrl){
+          const bg={id:b.id,name:b.name,emoji:b.emoji||'🖼️',dataUrl,
+            colors:['#111','#222','#000'],interact:'Custom background',
+            interactFn:'starBurst',price:0,owned:true,isCustom:true};
+          GS.customBgs.push(bg);
+          if(!BACKGROUNDS.find(x=>x.id===b.id))BACKGROUNDS.push(bg);
+          GS.ownedBgs.add(b.id);
+        }
+      });
+    }
+    if(Array.isArray(d.ce)){d.ce.forEach(ce=>{GS.customElements.push(ce);if(!ELEMENTS[ce.id])ELEMENTS[ce.id]={emoji:ce.emoji,name:ce.name,cat:'custom'};});}
+    if(Array.isArray(d.ae)){d.ae.forEach(ae=>{GS.aiElements.push(ae);if(!ELEMENTS[ae.id])ELEMENTS[ae.id]={emoji:ae.emoji,name:ae.name,cat:'ai',desc:ae.desc};});}
+    BACKGROUNDS.forEach(bg=>{bg.owned=GS.ownedBgs.has(bg.id);});
+    MUSIC_TRACKS.forEach(m=>{m.owned=GS.ownedMusic.has(m.id);});
+  }catch(e){}
+}
+
+// ============================================================
+//  BACKGROUND RENDERER + INTERACTIVE FX
+// ============================================================
+const BG=(()=>{
+  let bgC,bgCtx,fxC,fxCtx,W,H;
+  let particles=[],fxParticles=[],tick=0,animId;
+  let matrixDrops=[],matrixCols=[];
+  let mouseX=.5,mouseY=.5,targetMX=.5,targetMY=.5;
+  let currentBg=null;
+
+  // Per-bg interactive effect pools
+  let interactiveEffects=[];
+
+  function init(){
+    bgC=document.getElementById('bg-canvas');
+    bgCtx=bgC.getContext('2d');
+    fxC=document.getElementById('fx-canvas');
+    fxCtx=fxC.getContext('2d');
+    resize();
+    window.addEventListener('resize',resize);
+
+    const ca=document.getElementById('craft-area');
+    ca.addEventListener('mousemove',e=>{
+      const r=bgC.getBoundingClientRect();
+      targetMX=(e.clientX-r.left)/W;
+      targetMY=(e.clientY-r.top)/H;
+    });
+    ca.addEventListener('click',e=>{
+      const r=bgC.getBoundingClientRect();
+      onInteract(e.clientX-r.left,e.clientY-r.top);
+    });
+    ca.addEventListener('touchstart',e=>{
+      if(e.touches.length){
+        const r=bgC.getBoundingClientRect();
+        onInteract(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);
+      }
+    },{passive:true});
+    animate();
+  }
+
+  function resize(){
+    const ca=document.getElementById('craft-area');
+    W=bgC.width=fxC.width=ca.offsetWidth||800;
+    H=bgC.height=fxC.height=ca.offsetHeight||600;
+    rebuild();
+    if(currentBg?.id==='matrix')initMatrix();
+  }
+
+  function setBg(id){
+    const found=BACKGROUNDS.find(b=>b.id===id)||BACKGROUNDS[0];
+    currentBg=found;
+    // Load image for custom backgrounds
+    if(found.isCustom && found.dataUrl && !found._img){
+      const img=new Image();
+      img.onload=()=>{found._img=img;};
+      img.src=found.dataUrl;
+    }
+    rebuild();
+    if(currentBg.id==='matrix')initMatrix();
+    interactiveEffects=[];
+    const badge=document.getElementById('bg-badge');
+    if(badge){
+      if(found.isCustom) badge.innerHTML=`🖼️ <span>${found.name}</span> — Your custom background`;
+      else badge.innerHTML=`${found.emoji} <span>${found.name}</span> — ${found.interact}`;
+    }
+  }
+
+  function initMatrix(){
+    const cols=Math.floor(W/14);
+    matrixCols=Array.from({length:cols},(_,i)=>i*14);
+    matrixDrops=matrixCols.map(()=>Math.random()*H/14|0);
+  }
+
+  function rebuild(){
+    if(!currentBg)currentBg=BACKGROUNDS[0];
+    particles=[];
+    const c=currentBg;
+    // Custom image backgrounds don't need canvas particles
+    if(c.isCustom)return;
+    const count={space:220,space_light:180,lava:70,ocean:90,forest:55,galaxy:320,matrix:0,cosmos:160,
+      infinity:200,aurora:28,desert:40,tundra:80,volcano_bg:60,cyberpunk_bg:50,
+      dream:45,heaven:100,omega_bg:500}[c.id]||120;
+    const ptype={space:'stars',space_light:'light_stars',lava:'ember',ocean:'bubble',forest:'firefly',galaxy:'galaxy',
+      matrix:'none',cosmos:'cosmic',infinity:'infinity',aurora:'aurora',desert:'heat',
+      tundra:'snow_fall',volcano_bg:'ash_fall',cyberpunk_bg:'neon_rain',dream:'dream',
+      heaven:'divine',omega_bg:'omega'}[c.id]||'stars';
+    const pcol={space:'#ffffff',space_light:'#667eea',lava:'#ff4400',ocean:'#00aaff',forest:'#88ff44',
+      galaxy:'#cc88ff',cosmos:'#ffdd88',infinity:'#ffffff',aurora:'#44ffaa',
+      desert:'#ffaa44',tundra:'#aaddff',volcano_bg:'#888888',cyberpunk_bg:'#ff00aa',
+      dream:'#aa88ff',heaven:'#ffe066',omega_bg:'#ffffff'}[c.id]||'#ffffff';
+    for(let i=0;i<count;i++)particles.push(newP(ptype,pcol,i));
+  }
+
+  function newP(type,col,i){
+    const b={x:Math.random()*W,y:Math.random()*H,life:Math.random(),col};
+    switch(type){
+      case 'stars':return{...b,r:Math.random()*1.8+.2,twinkle:Math.random()*Math.PI*2,depth:Math.random()*.8+.2};
+      case 'light_stars':return{...b,r:Math.random()*2+.3,twinkle:Math.random()*Math.PI*2,depth:Math.random()*.8+.2,hue:Math.random()*60+200};
+      case 'ember':return{...b,r:Math.random()*3+1,vx:(Math.random()-.5)*.5,vy:-Math.random()-.3,alpha:Math.random()};
+      case 'bubble':return{...b,r:Math.random()*8+2,vy:-Math.random()*.5-.1,alpha:Math.random()*.35+.1};
+      case 'firefly':return{...b,r:Math.random()*3+1,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,gp:Math.random()*Math.PI*2};
+      case 'galaxy':return{...b,r:Math.random()*1.5+.2,angle:Math.random()*Math.PI*2,dist:Math.random()*Math.min(W,H)*.4+20,speed:(Math.random()*.002+.0005)*(Math.random()<.5?1:-1)};
+      case 'cosmic':return{...b,r:Math.random()*2+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,hue:Math.random()*360};
+      case 'infinity':return{...b,r:Math.random()*2+.2,speed:Math.random()*.003+.001,angle:Math.random()*Math.PI*2,dist:Math.random()*Math.max(W,H)*.5,hue:Math.random()*360};
+      case 'aurora':return{...b,x:Math.random()*W,y:Math.random()*H*.6,speed:Math.random()*.008+.002,wave:Math.random()*Math.PI*2,amp:30+Math.random()*60,hue:120+Math.random()*80,alpha:.3+Math.random()*.4};
+      case 'heat':return{...b,r:Math.random()*40+20,vx:(Math.random()-.5)*.3,vy:-Math.random()*.2-.1,alpha:Math.random()*.15+.05};
+      case 'snow_fall':return{...b,r:Math.random()*3+1,vx:(Math.random()-.5)*.5,vy:Math.random()*.8+.3,alpha:Math.random()*.6+.3};
+      case 'ash_fall':return{...b,r:Math.random()*4+1,vx:(Math.random()-.5)*.6,vy:Math.random()*1+.2,alpha:Math.random()*.4+.1,hue:Math.random()*30};
+      case 'neon_rain':return{...b,x:Math.random()*W,y:Math.random()*H,vy:Math.random()*6+3,len:Math.random()*40+20,hue:Math.random()<.5?300:180,alpha:Math.random()*.7+.3};
+      case 'dream':return{...b,r:Math.random()*30+10,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,hue:Math.random()*360,alpha:Math.random()*.15+.05};
+      case 'divine':return{...b,r:Math.random()*2+.3,speed:Math.random()*.004+.001,angle:Math.random()*Math.PI*2,dist:Math.random()*Math.min(W,H)*.45,hue:40+Math.random()*20};
+      case 'omega':return{...b,r:Math.random()*1.5+.1,speed:Math.random()*.006+.002,angle:Math.random()*Math.PI*2,dist:Math.random()*Math.max(W,H)*.7,hue:Math.random()*360,alpha:.5+Math.random()*.5};
+      default:return b;
+    }
+  }
+
+  // ── INTERACTIVE CLICK EFFECTS ──
+  function onInteract(x,y){
+    if(!currentBg||!GS.bgInteractOn)return;
+    const fn=currentBg.interactFn;
+    const fns={
+      starBurst:()=>addStarBurst(x,y),
+      sparkBurst:()=>addSparkBurst(x,y),
+      lavaRipple:()=>addRipple(x,y,'#ff4400',80),
+      whirlpool:()=>addWhirlpool(x,y),
+      bloom:()=>addBloom(x,y),
+      starTrail:()=>addStarTrail(x,y),
+      codeScatter:()=>addCodeScatter(x,y),
+      cosmicRay:()=>addCosmicRay(x,y),
+      dimensionTwist:()=>addDimensionTwist(x,y),
+      auroraPulse:()=>addAuroraPulse(x,y),
+      sandStorm:()=>addSandStorm(x,y),
+      iceShatter:()=>addIceShatter(x,y),
+      lavaBomb:()=>addLavaBomb(x,y),
+      neonPulse:()=>addNeonPulse(x,y),
+      dreamBubble:()=>addDreamBubble(x,y),
+      divineRay:()=>addDivineRay(x,y),
+      realityCollapse:()=>addRealityCollapse(x,y),
+    };
+    if(fns[fn])fns[fn]();
+  }
+
+  function addStarBurst(x,y){
+    for(let i=0;i<20;i++){
+      const a=Math.random()*Math.PI*2,spd=Math.random()*4+1;
+      interactiveEffects.push({type:'dot',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:1,col:`hsl(${Math.random()*60+200},100%,80%)`,r:Math.random()*3+1});
+    }
+    // shockwave
+    interactiveEffects.push({type:'ring',x,y,r:0,maxR:120,life:1,maxLife:1,col:'rgba(180,200,255,0.6)'});
+  }
+
+  // Sparkle burst for the light/white space background
+  function addSparkBurst(x,y){
+    const hues=[220,260,300,180,40];
+    for(let i=0;i<28;i++){
+      const a=Math.random()*Math.PI*2,spd=Math.random()*5+1.5,hue=hues[i%hues.length];
+      interactiveEffects.push({type:'dot',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:1.1,col:`hsl(${hue},80%,55%)`,r:Math.random()*3+1});
+    }
+    for(let i=0;i<3;i++)interactiveEffects.push({type:'ring',x,y,r:i*12,maxR:110+i*25,life:1,maxLife:.9,col:`hsla(${220+i*40},80%,55%,0.5)`});
+  }
+
+  function addRipple(x,y,col,maxR){
+    for(let i=0;i<3;i++)interactiveEffects.push({type:'ring',x,y,r:i*15,maxR:maxR+i*20,life:1,maxLife:1,col});
+  }
+
+  function addWhirlpool(x,y){
+    for(let i=0;i<30;i++){
+      const a=Math.random()*Math.PI*2,d=Math.random()*60+10;
+      interactiveEffects.push({type:'whirl',x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,cx:x,cy:y,angle:a,speed:.15,dist:d,life:1,maxLife:1.5,col:'#00aaff',r:Math.random()*2+1});
+    }
+  }
+
+  function addBloom(x,y){
+    const petals=8;
+    for(let i=0;i<petals;i++){
+      const a=(i/petals)*Math.PI*2;
+      interactiveEffects.push({type:'petal',x,y,angle:a,dist:0,maxDist:50,life:1,maxLife:1.2,hue:Math.random()*60+280,size:12});
+    }
+    interactiveEffects.push({type:'dot',x,y,vx:0,vy:0,life:1,maxLife:2,col:'#ffff88',r:6});
+  }
+
+  function addStarTrail(x,y){
+    for(let i=0;i<15;i++){
+      const a=Math.random()*Math.PI*2,spd=Math.random()*6+2;
+      interactiveEffects.push({type:'trail',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:1,col:`hsl(${Math.random()*60+240},100%,75%)`,r:Math.random()*2+.5,trail:[]});
+    }
+  }
+
+  function addCodeScatter(x,y){
+    const chars='01∞⚡█▓░▒'.split('');
+    for(let i=0;i<12;i++){
+      const a=Math.random()*Math.PI*2,spd=Math.random()*5+2;
+      interactiveEffects.push({type:'text',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:1,col:`hsl(130,100%,${50+Math.random()*30}%)`,char:chars[Math.floor(Math.random()*chars.length)]});
+    }
+  }
+
+  function addCosmicRay(x,y){
+    for(let i=0;i<6;i++){
+      const a=Math.random()*Math.PI*2;
+      interactiveEffects.push({type:'ray',x,y,angle:a,len:0,maxLen:W*.7,life:1,maxLife:.8,hue:Math.random()*360});
+    }
+  }
+
+  function addDimensionTwist(x,y){
+    for(let i=0;i<40;i++){
+      const a=Math.random()*Math.PI*2,d=Math.random()*80;
+      interactiveEffects.push({type:'twist',x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,cx:x,cy:y,angle:a,dist:d,life:1,maxLife:2,hue:Math.random()*360,r:Math.random()*3+1});
+    }
+  }
+
+  function addAuroraPulse(x,y){
+    for(let i=0;i<5;i++){
+      interactiveEffects.push({type:'aurora_wave',x:0,y:y+i*20-40,width:W,amp:30+i*10,phase:0,speed:.12,life:1,maxLife:2,hue:120+i*25});
+    }
+  }
+
+  function addSandStorm(x,y){
+    for(let i=0;i<50;i++){
+      const a=-Math.PI/2+(Math.random()-.5)*1.2,spd=Math.random()*8+3;
+      interactiveEffects.push({type:'dot',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:.8,col:`hsl(30,70%,${40+Math.random()*30}%)`,r:Math.random()*3+1});
+    }
+  }
+
+  function addIceShatter(x,y){
+    for(let i=0;i<16;i++){
+      const a=(i/16)*Math.PI*2,spd=Math.random()*5+2;
+      interactiveEffects.push({type:'shard',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:1,col:'rgba(180,230,255,0.8)',size:Math.random()*12+4,angle:Math.random()*Math.PI*2});
+    }
+    interactiveEffects.push({type:'ring',x,y,r:0,maxR:80,life:1,maxLife:.5,col:'rgba(200,240,255,0.8)'});
+  }
+
+  function addLavaBomb(x,y){
+    for(let i=0;i<8;i++){
+      const a=Math.random()*Math.PI*2,spd=Math.random()*7+3;
+      interactiveEffects.push({type:'lavaball',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-4,life:1,maxLife:1.2,r:Math.random()*8+4,vy_grav:.3});
+    }
+    interactiveEffects.push({type:'ring',x,y,r:0,maxR:100,life:1,maxLife:.6,col:'rgba(255,100,0,0.7)'});
+  }
+
+  function addNeonPulse(x,y){
+    const hue=Math.random()*60+260;
+    for(let i=0;i<5;i++)interactiveEffects.push({type:'ring',x,y,r:i*20,maxR:200+i*30,life:1,maxLife:1,col:`hsla(${hue},100%,60%,0.7)`});
+    for(let i=0;i<20;i++){
+      const a=Math.random()*Math.PI*2,spd=Math.random()*6+2;
+      interactiveEffects.push({type:'dot',x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,maxLife:.8,col:`hsl(${hue},100%,70%)`,r:Math.random()*3+1});
+    }
+  }
+
+  function addDreamBubble(x,y){
+    for(let i=0;i<6;i++){
+      const angle=Math.random()*Math.PI*2,spd=Math.random()*2+.5;
+      interactiveEffects.push({type:'dreamball',x,y,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd-.5,life:1,maxLife:2,r:Math.random()*25+10,hue:Math.random()*360});
+    }
+  }
+
+  function addDivineRay(x,y){
+    for(let i=0;i<8;i++){
+      interactiveEffects.push({type:'ray',x,y,angle:(i/8)*Math.PI*2,len:0,maxLen:H*.8,life:1,maxLife:1.2,hue:45});
+    }
+    interactiveEffects.push({type:'ring',x,y,r:0,maxR:150,life:1,maxLife:1,col:'rgba(255,230,100,0.6)'});
+  }
+
+  function addRealityCollapse(x,y){
+    for(let i=0;i<60;i++){
+      const a=Math.random()*Math.PI*2,d=Math.random()*200+20;
+      interactiveEffects.push({type:'collapse',x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,tx:x,ty:y,life:1,maxLife:1.5,hue:Math.random()*360,r:Math.random()*3+1});
+    }
+    for(let i=0;i<10;i++)interactiveEffects.push({type:'ring',x,y,r:i*10,maxR:300+i*10,life:1,maxLife:2,col:`hsla(${i*36},100%,60%,0.4)`});
+  }
+
+  function animate(){
+    animId=requestAnimationFrame(animate);
+    if(!Poki.isAdRunning()) tick++; // freeze particle tick during real ad breaks
+    mouseX+=(targetMX-mouseX)*.08;
+    mouseY+=(targetMY-mouseY)*.08;
+    if(!bgCtx||!W||!H)return;
+    drawBg();
+    drawFx();
+  }
+
+  function drawBg(){
+    const bg=currentBg||BACKGROUNDS[0];
+
+    // ── Custom image background ──────────────────────────────
+    if(bg.isCustom && bg._img){
+      const px=(mouseX-.5)*60,py=(mouseY-.5)*40;
+      bgCtx.clearRect(0,0,W,H);
+      const img=bg._img;
+      // Cover-fit with parallax shift
+      const scale=Math.max((W+120)/img.width,(H+80)/img.height);
+      const iw=img.width*scale,ih=img.height*scale;
+      const ox=(W-iw)/2+px,oy=(H-ih)/2+py;
+      bgCtx.drawImage(img,ox,oy,iw,ih);
+      // Subtle dark vignette so elements stay readable
+      const vg=bgCtx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);
+      vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(0,0,0,.45)');
+      bgCtx.fillStyle=vg;bgCtx.fillRect(0,0,W,H);
+      return;
+    }
+
+    const cols=bg.colors||['#000010','#050018','#000008'];
+    const ptype={space:'stars',space_light:'light_stars',lava:'ember',ocean:'bubble',forest:'firefly',galaxy:'galaxy',
+      matrix:'matrix_scroll',cosmos:'cosmic',infinity:'infinity',aurora:'aurora',desert:'heat',
+      tundra:'snow_fall',volcano_bg:'ash_fall',cyberpunk_bg:'neon_rain',dream:'dream',
+      heaven:'divine',omega_bg:'omega'}[bg.id]||'stars';
+    // BIG parallax offset — mouse fully shifts the entire background world
+    const px=(mouseX-.5)*120,py=(mouseY-.5)*80;
+
+    if(bg.id==='matrix'){
+      bgCtx.fillStyle='rgba(0,3,0,.10)';
+      bgCtx.fillRect(0,0,W,H);
+      bgCtx.font='13px monospace';
+      const chars='アイウエオカキクケコ01∞⚡🔥💧ABCDEF░▒▓';
+      // Mouse pans the matrix columns sideways
+      const shift=Math.round(px/14);
+      matrixDrops.forEach((drop,i)=>{
+        const ch=chars[Math.floor(Math.random()*chars.length)];
+        const bright=Math.random()>.92;
+        bgCtx.fillStyle=bright?`#ccffcc`:`hsl(${130+Math.random()*20},100%,${40+Math.random()*25}%)`;
+        const colX=(matrixCols[i]+shift*14+W*2)%(W+28)-14;
+        bgCtx.fillText(ch,colX,drop*14+py*.5);
+        if(drop*14>H&&Math.random()>.975)matrixDrops[i]=0;
+        else matrixDrops[i]++;
+      });
+      return;
+    }
+
+    // Gradient center moves with mouse — whole background shifts
+    const grad=bgCtx.createRadialGradient(W/2+px,H/2+py,0,W/2+px,H/2+py,Math.max(W,H)*.85);
+    grad.addColorStop(0,cols[1]);grad.addColorStop(.5,cols[0]);grad.addColorStop(1,cols[2]);
+    bgCtx.fillStyle=grad;bgCtx.fillRect(0,0,W,H);
+
+    if(['space','galaxy','cosmos','infinity','omega_bg'].includes(bg.id)){
+      const ng=bgCtx.createRadialGradient(W*.3+px*.7,H*.4+py*.7,0,W*.3+px*.7,H*.4+py*.7,W*.4);
+      ng.addColorStop(0,'rgba(80,0,120,.15)');ng.addColorStop(1,'transparent');
+      bgCtx.fillStyle=ng;bgCtx.fillRect(0,0,W,H);
+    }
+    if(bg.id==='space_light'){
+      // Soft pastel nebula blobs on white
+      [[W*.2+px*.5,H*.3+py*.4,'rgba(120,160,255,.07)'],[W*.7+px*.4,H*.6+py*.3,'rgba(200,130,255,.07)'],[W*.5+px*.3,H*.2+py*.5,'rgba(100,220,200,.06)']].forEach(([nx,ny,nc])=>{
+        const ng=bgCtx.createRadialGradient(nx,ny,0,nx,ny,W*.35);
+        ng.addColorStop(0,nc);ng.addColorStop(1,'transparent');
+        bgCtx.fillStyle=ng;bgCtx.fillRect(0,0,W,H);
+      });
+    }
+    if(bg.id==='lava'||bg.id==='volcano_bg'){
+      const ng=bgCtx.createRadialGradient(W*.5+px*.8,H*.7+py*.8,0,W*.5+px*.8,H*.7+py*.8,W*.5);
+      ng.addColorStop(0,'rgba(255,80,0,.12)');ng.addColorStop(1,'transparent');
+      bgCtx.fillStyle=ng;bgCtx.fillRect(0,0,W,H);
+    }
+    if(bg.id==='ocean'){
+      const ng=bgCtx.createRadialGradient(W*.5+px*.6,H*.3+py*.6,0,W*.5+px*.6,H*.3+py*.6,W*.45);
+      ng.addColorStop(0,'rgba(0,100,200,.12)');ng.addColorStop(1,'transparent');
+      bgCtx.fillStyle=ng;bgCtx.fillRect(0,0,W,H);
+    }
+
+    particles.forEach((p,i)=>{
+      bgCtx.save();
+      switch(ptype){
+        case 'stars':{
+          // Multi-layer depth parallax — deeper stars move MORE with mouse
+          const tw=Math.sin(tick*.02+p.twinkle)*.4+.6;
+          const ox=px*p.depth,oy=py*p.depth;
+          bgCtx.globalAlpha=tw;
+          const g=bgCtx.createRadialGradient(p.x+ox,p.y+oy,0,p.x+ox,p.y+oy,p.r*2.5);
+          g.addColorStop(0,'#fff');g.addColorStop(.4,'rgba(200,200,255,.5)');g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r*2.5,0,Math.PI*2);bgCtx.fill();break;
+        }
+        case 'light_stars':{
+          // Coloured sparkles on a light background — pastel dots with soft glow
+          const tw=Math.sin(tick*.025+p.twinkle)*.35+.65;
+          const ox=px*p.depth,oy=py*p.depth;
+          bgCtx.globalAlpha=tw*.55;
+          const g=bgCtx.createRadialGradient(p.x+ox,p.y+oy,0,p.x+ox,p.y+oy,p.r*3);
+          g.addColorStop(0,`hsla(${p.hue},80%,60%,1)`);g.addColorStop(.5,`hsla(${p.hue},70%,70%,.3)`);g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r*3,0,Math.PI*2);bgCtx.fill();break;
+        }
+        case 'ember':{
+          // Embers drift sideways with mouse — wind effect
+          const ox=px*.6,oy=py*.3;
+          bgCtx.globalAlpha=p.alpha;
+          const g=bgCtx.createRadialGradient(p.x+ox,p.y+oy,0,p.x+ox,p.y+oy,p.r*3);
+          g.addColorStop(0,'#ffcc44');g.addColorStop(.5,'#ff4400');g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r*3,0,Math.PI*2);bgCtx.fill();
+          p.x+=p.vx+Math.sin(tick*.03+i)*.3+(targetMX-.5)*.8;
+          p.y+=p.vy+(targetMY-.5)*.3;p.alpha-=.003;
+          if(p.y<-10||p.alpha<=0){p.x=Math.random()*W;p.y=H+10;p.alpha=Math.random()*.7+.3;p.vy=-Math.random()-.3;}
+          break;
+        }
+        case 'bubble':{
+          // Bubbles shift with mouse — like tilting an aquarium
+          const ox=px*.5,oy=py*.4;
+          bgCtx.globalAlpha=p.alpha;
+          bgCtx.strokeStyle='rgba(0,180,255,.6)';bgCtx.lineWidth=1;
+          bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r,0,Math.PI*2);bgCtx.stroke();
+          const sh=bgCtx.createRadialGradient(p.x+ox-p.r*.3,p.y+oy-p.r*.3,0,p.x+ox,p.y+oy,p.r);
+          sh.addColorStop(0,'rgba(255,255,255,.3)');sh.addColorStop(1,'transparent');
+          bgCtx.fillStyle=sh;bgCtx.fill();
+          p.y+=p.vy;p.x+=Math.sin(tick*.01+i)*.3;
+          if(p.y+oy<-20){p.y=H+20;p.x=Math.random()*W;}break;
+        }
+        case 'firefly':{
+          // Fireflies drift toward mouse like attracted to light
+          p.gp+=.05;const glow=Math.sin(p.gp)*.5+.5;
+          const ox=px*.55,oy=py*.55;
+          bgCtx.globalAlpha=glow*.8+.2;
+          const g=bgCtx.createRadialGradient(p.x+ox,p.y+oy,0,p.x+ox,p.y+oy,p.r*6);
+          g.addColorStop(0,'#ccff44');g.addColorStop(.3,p.col);g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r*6,0,Math.PI*2);bgCtx.fill();
+          // Gentle attraction to mouse
+          p.vx+=(targetMX*W-p.x)*.0004;p.vy+=(targetMY*H-p.y)*.0004;
+          p.x+=p.vx+(Math.random()-.5)*.4;p.y+=p.vy+(Math.random()-.5)*.4;
+          p.vx*=.98;p.vy*=.98;
+          if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;break;
+        }
+        case 'galaxy':{
+          // Galaxy rotates AND pans with mouse
+          p.angle+=p.speed;
+          const cx=W/2+px*.65,cy=H/2+py*.65;
+          const gx=cx+Math.cos(p.angle)*p.dist*(W/H*.8),gy=cy+Math.sin(p.angle)*p.dist;
+          bgCtx.globalAlpha=.55;bgCtx.fillStyle=p.col;
+          bgCtx.beginPath();bgCtx.arc(gx,gy,p.r,0,Math.PI*2);bgCtx.fill();break;
+        }
+        case 'matrix_scroll':{
+          // Handled separately above (matrix early return)
+          break;
+        }
+        case 'cosmic':{
+          // Cosmic particles swirl toward mouse position
+          p.hue=(p.hue+.5)%360;
+          const ox=px*.7,oy=py*.7;
+          bgCtx.globalAlpha=.55;
+          bgCtx.fillStyle=`hsl(${p.hue},80%,70%)`;
+          bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r,0,Math.PI*2);bgCtx.fill();
+          p.x+=p.vx+(targetMX-.5)*.5;p.y+=p.vy+(targetMY-.5)*.4;
+          if(p.x<-60||p.x>W+60||p.y<-60||p.y>H+60){p.x=Math.random()*W;p.y=Math.random()*H;}break;
+        }
+        case 'infinity':{
+          // Infinity figure-8 center tracks mouse
+          p.angle+=p.speed;p.hue=(p.hue+.3)%360;
+          const cos=Math.cos(p.angle),denom=1+Math.sin(p.angle)*Math.sin(p.angle);
+          const ix=W/2+px*.7+p.dist*cos/denom,iy=H/2+py*.7+p.dist*cos*Math.sin(p.angle)/denom;
+          bgCtx.globalAlpha=.6;bgCtx.fillStyle=`hsl(${p.hue},100%,70%)`;
+          bgCtx.beginPath();bgCtx.arc(ix,iy,p.r,0,Math.PI*2);bgCtx.fill();break;
+        }
+        case 'aurora':{
+          // Aurora waves shift vertically AND horizontally with mouse
+          p.wave+=p.speed;
+          const ax=(p.x+tick*.2+px*.8)%W,ay=p.y+Math.sin(p.wave)*p.amp+py*.6;
+          const ww=160;
+          const g=bgCtx.createLinearGradient(ax-ww,ay,ax+ww,ay);
+          g.addColorStop(0,'transparent');g.addColorStop(.5,`hsla(${p.hue},90%,60%,${p.alpha})`);g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.fillRect(ax-ww,ay-6,ww*2,12);
+          if(ax>W+ww)p.x-=W+ww*2;break;
+        }
+        case 'heat':{
+          // Heat shimmer follows mouse like bending air
+          const ox=px*.7,oy=py*.5;
+          bgCtx.globalAlpha=p.alpha+Math.sin(tick*.04+i)*.03;
+          const g=bgCtx.createRadialGradient(p.x+ox,p.y+oy,0,p.x+ox,p.y+oy,p.r);
+          g.addColorStop(0,'rgba(255,200,80,.3)');g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r,0,Math.PI*2);bgCtx.fill();
+          p.x+=p.vx+(targetMX-.5)*.4;p.y+=p.vy;if(p.y+oy<-50){p.y=H+50;p.x=Math.random()*W;}break;
+        }
+        case 'snow_fall':{
+          // Snow drifts with mouse like wind
+          const ox=px*.5;
+          bgCtx.globalAlpha=p.alpha;bgCtx.fillStyle='#aaddff';
+          bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y,p.r,0,Math.PI*2);bgCtx.fill();
+          p.x+=p.vx+Math.sin(tick*.02+i)*.3+(targetMX-.5)*1.2;
+          p.y+=p.vy;if(p.y>H+10){p.y=-10;p.x=Math.random()*W;}break;
+        }
+        case 'ash_fall':{
+          // Ash swirls with mouse updraft
+          const ox=px*.55;
+          bgCtx.globalAlpha=p.alpha;bgCtx.fillStyle=`hsl(${p.hue},5%,50%)`;
+          bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y,p.r,0,Math.PI*2);bgCtx.fill();
+          p.x+=p.vx+Math.sin(tick*.015+i)*.5+(targetMX-.5)*.9;
+          p.y+=p.vy-(targetMY-.5)*.3;if(p.y>H+10){p.y=-10;p.x=Math.random()*W;}break;
+        }
+        case 'neon_rain':{
+          // Neon rain angles with mouse — like rain in wind
+          const angle=(targetMX-.5)*.4;
+          const rx=p.x+px*.6+Math.sin(angle)*p.len,ry=p.y;
+          bgCtx.globalAlpha=p.alpha;bgCtx.strokeStyle=`hsl(${p.hue},100%,60%)`;bgCtx.lineWidth=1.5;
+          bgCtx.beginPath();bgCtx.moveTo(rx,ry);
+          bgCtx.lineTo(rx+Math.sin(angle)*p.len,ry-p.len);bgCtx.stroke();
+          p.y+=p.vy;if(p.y>H+p.len){p.y=-p.len;p.x=Math.random()*W;}break;
+        }
+        case 'dream':{
+          // Dream blobs float toward where you point
+          p.hue=(p.hue+.2)%360;
+          const ox=px*.6,oy=py*.6;
+          bgCtx.globalAlpha=p.alpha+Math.sin(tick*.01+i)*.03;
+          const g=bgCtx.createRadialGradient(p.x+ox,p.y+oy,0,p.x+ox,p.y+oy,p.r);
+          g.addColorStop(0,`hsla(${p.hue},70%,60%,.4)`);g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(p.x+ox,p.y+oy,p.r,0,Math.PI*2);bgCtx.fill();
+          // Gently drift toward mouse
+          p.vx+=(targetMX*W-p.x)*.0003;p.vy+=(targetMY*H-p.y)*.0003;
+          p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.vy*=.99;
+          if(p.x<-p.r||p.x>W+p.r||p.y<-p.r||p.y>H+p.r){p.x=Math.random()*W;p.y=Math.random()*H;p.vx=0;p.vy=0;}break;
+        }
+        case 'divine':{
+          // Divine orbs orbit the mouse position
+          p.angle+=p.speed;
+          const cx=W/2+px*.75,cy=H/2+py*.75;
+          const dx2=cx+p.dist*Math.cos(p.angle)*1.2,dy2=cy+p.dist*Math.sin(p.angle)*.7;
+          bgCtx.globalAlpha=.75;
+          const g=bgCtx.createRadialGradient(dx2,dy2,0,dx2,dy2,p.r*3);
+          g.addColorStop(0,`hsl(${p.hue},100%,95%)`);g.addColorStop(1,'transparent');
+          bgCtx.fillStyle=g;bgCtx.beginPath();bgCtx.arc(dx2,dy2,p.r*3,0,Math.PI*2);bgCtx.fill();break;
+        }
+        case 'omega':{
+          // Omega vortex follows mouse like a black hole
+          p.angle+=p.speed*2;p.hue=(p.hue+1)%360;
+          const cx=W/2+px*.8,cy=H/2+py*.8;
+          const ox2=cx+p.dist*Math.cos(p.angle),oy2=cy+p.dist*Math.sin(p.angle)*.5;
+          bgCtx.globalAlpha=p.alpha;bgCtx.fillStyle=`hsl(${p.hue},100%,80%)`;
+          bgCtx.beginPath();bgCtx.arc(ox2,oy2,p.r,0,Math.PI*2);bgCtx.fill();break;
+        }
+      }
+      bgCtx.restore();
+    });
+  }
+
+  function drawFx(){
+    fxCtx.clearRect(0,0,W,H);
+    interactiveEffects=interactiveEffects.filter(e=>e.life>0);
+    const dt=.016;
+    interactiveEffects.forEach(e=>{
+      e.life-=dt/e.maxLife;
+      const a=Math.max(0,e.life);
+      fxCtx.save();fxCtx.globalAlpha=a;
+      switch(e.type){
+        case 'dot':
+          fxCtx.fillStyle=e.col;fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r,0,Math.PI*2);fxCtx.fill();
+          e.x+=e.vx;e.y+=e.vy;e.vx*=.97;e.vy*=.97;break;
+        case 'ring':
+          fxCtx.strokeStyle=e.col;fxCtx.lineWidth=2;
+          fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r,0,Math.PI*2);fxCtx.stroke();
+          e.r+=(e.maxR-e.r)*.1;break;
+        case 'whirl':
+          e.angle+=e.speed;e.dist*=.97;
+          e.x=e.cx+Math.cos(e.angle)*e.dist;e.y=e.cy+Math.sin(e.angle)*e.dist;
+          fxCtx.fillStyle=e.col;fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r,0,Math.PI*2);fxCtx.fill();break;
+        case 'petal':
+          e.dist+=(e.maxDist-e.dist)*.08;
+          const px2=e.x+Math.cos(e.angle)*e.dist,py2=e.y+Math.sin(e.angle)*e.dist;
+          fxCtx.fillStyle=`hsl(${e.hue},100%,75%)`;
+          fxCtx.beginPath();fxCtx.ellipse(px2,py2,e.size*(1-e.life*.5),e.size*.5*(1-e.life*.5),e.angle,0,Math.PI*2);fxCtx.fill();break;
+        case 'trail':
+          e.trail=e.trail||[];e.trail.push({x:e.x,y:e.y});
+          if(e.trail.length>8)e.trail.shift();
+          e.trail.forEach((pt,i)=>{
+            fxCtx.globalAlpha=a*(i/e.trail.length)*.8;
+            fxCtx.fillStyle=e.col;fxCtx.beginPath();fxCtx.arc(pt.x,pt.y,e.r*(i/e.trail.length),0,Math.PI*2);fxCtx.fill();
+          });
+          e.x+=e.vx;e.y+=e.vy;e.vx*=.96;e.vy*=.96;break;
+        case 'text':
+          fxCtx.fillStyle=e.col;fxCtx.font='bold 16px monospace';
+          fxCtx.fillText(e.char,e.x,e.y);
+          e.x+=e.vx;e.y+=e.vy;e.vx*=.95;e.vy*=.95;break;
+        case 'ray':
+          e.len+=(e.maxLen-e.len)*.1;
+          const ex=e.x+Math.cos(e.angle)*e.len,ey=e.y+Math.sin(e.angle)*e.len;
+          const rg=fxCtx.createLinearGradient(e.x,e.y,ex,ey);
+          rg.addColorStop(0,`hsla(${e.hue},100%,80%,.8)`);rg.addColorStop(1,'transparent');
+          fxCtx.strokeStyle=rg;fxCtx.lineWidth=2;
+          fxCtx.beginPath();fxCtx.moveTo(e.x,e.y);fxCtx.lineTo(ex,ey);fxCtx.stroke();break;
+        case 'twist':
+          e.angle+=.1*(1-e.life);
+          e.x=e.cx+Math.cos(e.angle)*e.dist;e.y=e.cy+Math.sin(e.angle)*e.dist;
+          fxCtx.fillStyle=`hsl(${e.hue},100%,70%)`;fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r,0,Math.PI*2);fxCtx.fill();break;
+        case 'aurora_wave':
+          e.phase+=e.speed;
+          const wg=fxCtx.createLinearGradient(0,e.y,0,e.y+60);
+          wg.addColorStop(0,'transparent');wg.addColorStop(.4,`hsla(${e.hue},90%,65%,.5)`);wg.addColorStop(1,'transparent');
+          fxCtx.fillStyle=wg;
+          fxCtx.beginPath();fxCtx.moveTo(0,e.y);
+          for(let x=0;x<=W;x+=4)fxCtx.lineTo(x,e.y+Math.sin(x*.015+e.phase)*e.amp);
+          fxCtx.lineTo(W,e.y+60);fxCtx.lineTo(0,e.y+60);fxCtx.closePath();fxCtx.fill();break;
+        case 'shard':
+          fxCtx.fillStyle=e.col;fxCtx.save();
+          fxCtx.translate(e.x,e.y);fxCtx.rotate(e.angle);
+          fxCtx.fillRect(-e.size/2,-e.size*.15,e.size,e.size*.3);
+          fxCtx.restore();
+          e.x+=e.vx;e.y+=e.vy;e.vy+=.2;e.angle+=.1;e.vx*=.97;e.vy*=.97;break;
+        case 'lavaball':
+          const lg=fxCtx.createRadialGradient(e.x,e.y,0,e.x,e.y,e.r*2);
+          lg.addColorStop(0,'#ffdd00');lg.addColorStop(.5,'#ff4400');lg.addColorStop(1,'transparent');
+          fxCtx.fillStyle=lg;fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r*2,0,Math.PI*2);fxCtx.fill();
+          e.x+=e.vx;e.y+=e.vy;e.vy+=e.vy_grav;e.vx*=.99;break;
+        case 'dreamball':
+          const dg=fxCtx.createRadialGradient(e.x,e.y,0,e.x,e.y,e.r);
+          dg.addColorStop(0,`hsla(${e.hue},80%,70%,.3)`);dg.addColorStop(1,'transparent');
+          fxCtx.fillStyle=dg;fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r,0,Math.PI*2);fxCtx.fill();
+          fxCtx.strokeStyle=`hsla(${e.hue},80%,80%,.4)`;fxCtx.lineWidth=1;fxCtx.stroke();
+          e.x+=e.vx;e.y+=e.vy;e.vx*=.99;e.vy*=.99;e.hue=(e.hue+.5)%360;break;
+        case 'collapse':
+          const cdx=e.tx-e.x,cdy=e.ty-e.y,cd=Math.hypot(cdx,cdy);
+          e.x+=cdx/cd*3;e.y+=cdy/cd*3;
+          fxCtx.fillStyle=`hsl(${e.hue},100%,70%)`;fxCtx.beginPath();fxCtx.arc(e.x,e.y,e.r,0,Math.PI*2);fxCtx.fill();break;
+      }
+      fxCtx.restore();
+    });
+  }
+
+  return{init,setBg,resize};
+})();
+
+// ============================================================
+//  AI ELEMENT CREATOR  (uses Anthropic API via fetch)
+// ============================================================
+const AI = (() => {
+  const SUGGESTIONS = [
+    {name:'Thunderstorm Dragon',hint:'storm + dragon'},
+    {name:'Crystal Mermaid',hint:'crystal + mermaid'},
+    {name:'Quantum Phoenix',hint:'quantum + phoenix'},
+    {name:'Cyber Golem',hint:'robot + golem'},
+    {name:'Solar Vampire',hint:'sun + vampire'},
+    {name:'Void Unicorn',hint:'void + unicorn'},
+    {name:'Nuclear Winter',hint:'nuclear + snow'},
+    {name:'Dream Dinosaur',hint:'dream + fossil'},
+    {name:'Galaxy Witch',hint:'galaxy + magic'},
+    {name:'Plasma Samurai',hint:'laser + samurai'},
+    {name:'Tsunami God',hint:'tsunami + god'},
+    {name:'Bio-Mechanical Tree',hint:'robot + tree'},
+  ];
+
+  const EMOJI_MAP = {
+    fire:'🔥',water:'💧',earth:'🌍',lightning:'⚡',ice:'🧊',dark:'🌑',light:'💡',wind:'💨',
+    dragon:'🐉',beast:'🦁',ghost:'👻',machine:'🤖',nature:'🌿',cosmic:'🌌',magic:'✨',
+    crystal:'💎',shadow:'👥',plasma:'🔴',cyber:'🤖',ancient:'🏛️',divine:'🌟',
+    void:'🕳️',dream:'💭',quantum:'⚛️',solar:'☀️',lunar:'🌙',storm:'⛈️',
+  };
+
+  function guessEmoji(name, desc) {
+    const lc = (name + ' ' + desc).toLowerCase();
+    for (const [k, v] of Object.entries(EMOJI_MAP)) {
+      if (lc.includes(k)) return v;
+    }
+    const misc = ['🌀','💫','🔮','🧬','⚗️','🎯','🏆','🗡️','🛡️','🌈','💥','🎭'];
+    return misc[Math.floor(Math.random() * misc.length)];
+  }
+
+  async function create(prompt) {
+    // Use Anthropic API to generate a creative element
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          system: `You are a creative element generator for a crafting game like Infinite Craft. 
+Given ANY concept the player describes, create a fun game element.
+Respond ONLY with valid JSON: {"name":"Element Name","emoji":"single emoji","desc":"one fun sentence describing this element in the game world","cat":"nature|human|tech|cosmic|starter","rarity":"common|rare|legendary"}
+The element can be ANYTHING: real, fictional, abstract, meme, food, concept, person, place, object, feeling — anything!
+Keep names short (1-4 words), emojis fitting, descriptions playful and exciting.`,
+          messages: [{ role: 'user', content: `Create a game element for: "${prompt}"` }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text || '';
+      const clean = text.replace(/```json|```/g, '').trim();
+      return JSON.parse(clean);
+    } catch (e) {
+      // Fallback: generate locally
+      return generateLocally(prompt);
+    }
+  }
+
+  function generateLocally(prompt) {
+    const lc = prompt.toLowerCase();
+    const emoji = guessEmoji(prompt, '');
+    // Smart local generation based on keywords
+    const templates = [
+      { keys: ['pizza','food','eat','burger','taco','sushi'], emoji: '🍕', suffix: 'Pizza', desc: 'A delicious element that powers up hungry crafters!' },
+      { keys: ['cat','dog','pet','animal'], emoji: '🐱', suffix: 'Creature', desc: 'A lovable creature that roams the elemental plane.' },
+      { keys: ['love','heart','romance'], emoji: '❤️', suffix: 'Love', desc: 'Pure emotion crystallized into elemental form.' },
+      { keys: ['money','cash','rich','dollar'], emoji: '💰', suffix: 'Fortune', desc: 'Wealth incarnate — everything it touches turns to gold.' },
+      { keys: ['internet','meme','viral','tiktok'], emoji: '📱', suffix: 'Viral', desc: 'Spreads faster than wildfire through the digital realm.' },
+      { keys: ['space','alien','ufo','mars'], emoji: '👽', suffix: 'Alien', desc: 'Visitor from a dimension beyond the known universe.' },
+      { keys: ['music','song','dance','beat'], emoji: '🎵', suffix: 'Harmony', desc: 'Vibrates at the frequency of creation itself.' },
+      { keys: ['science','lab','experiment'], emoji: '🔬', suffix: 'Experiment', desc: 'The result of forbidden scientific curiosity.' },
+    ];
+    for (const t of templates) {
+      if (t.keys.some(k => lc.includes(k))) {
+        return { name: prompt.split(' ').map(w=>w[0]?.toUpperCase()+w.slice(1)).join(' '), emoji: t.emoji, desc: t.desc, cat: 'ai', rarity: 'rare' };
+      }
+    }
+    const rarities = ['rare', 'legendary', 'common'];
+    const cats = ['nature', 'human', 'tech', 'cosmic'];
+    return {
+      name: prompt.split(' ').map(w => w[0]?.toUpperCase() + w.slice(1)).join(' '),
+      emoji: emoji,
+      desc: `A mysterious ${prompt} element that bends the rules of reality.`,
+      cat: cats[Math.floor(Math.random() * cats.length)],
+      rarity: rarities[Math.floor(Math.random() * rarities.length)]
+    };
+  }
+
+  return { create, SUGGESTIONS };
+})();
+
+// ============================================================
+//  MUSIC ENGINE
+// ============================================================
+const Music = (() => {
+  let ctx2 = null, gainNode = null, playing = false;
+  let currentPreset = 'ambient', loopTimer = null, nodes = [];
+  const PRESETS = {
+    ambient:   { bpm: 60,  notes: [261, 329, 392, 523], wave: 'sine',     vol: 0.12 },
+    electronic:{ bpm: 120, notes: [55, 110, 165, 220],  wave: 'sawtooth', vol: 0.10 },
+    ocean:     { bpm: 40,  notes: [196, 247, 294, 370],  wave: 'sine',     vol: 0.12 },
+    forest:    { bpm: 50,  notes: [329, 415, 494, 587],  wave: 'triangle', vol: 0.12 },
+    synthwave: { bpm: 100, notes: [165, 220, 277, 330],  wave: 'sawtooth', vol: 0.10 },
+    epic:      { bpm: 90,  notes: [130, 164, 196, 246],  wave: 'triangle', vol: 0.12 },
+    dark:      { bpm: 70,  notes: [55, 73, 87, 110],     wave: 'sawtooth', vol: 0.10 },
+    divine:    { bpm: 45,  notes: [523, 659, 784, 1047], wave: 'sine',     vol: 0.11 },
+  };
+  function ensureCtx() {
+    if (!ctx2) { ctx2 = new (window.AudioContext || window.webkitAudioContext)(); gainNode = ctx2.createGain(); gainNode.gain.value = GS.musicVol; gainNode.connect(ctx2.destination); }
+    if (ctx2.state === 'suspended') ctx2.resume();
+  }
+  function setVolume(v) {
+    GS.musicVol = Math.max(0, Math.min(1, v));
+    if (gainNode) gainNode.gain.setTargetAtTime(GS.musicVol, ctx2.currentTime, 0.05);
+    if (window.Poki) Poki.syncAudio(GS.musicVol > 0);
+    save();
+  }
+  // Called by Poki when an ad starts/ends — instantly silences without changing saved volume
+  function setAdMute(muted) {
+    if (!gainNode || !ctx2) return;
+    const target = muted ? 0 : GS.musicVol;
+    gainNode.gain.setTargetAtTime(target, ctx2.currentTime, 0.08);
+  }
+  function stopAll() { nodes.forEach(n => { try { n.stop(); } catch(e){} }); nodes = []; clearTimeout(loopTimer); }
+  function scheduleNote(freq, time, dur, vol) {
+    const o = ctx2.createOscillator(), g = ctx2.createGain();
+    o.type = PRESETS[currentPreset]?.wave || 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(vol, time + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    o.connect(g); g.connect(gainNode); o.start(time); o.stop(time + dur + 0.1);
+    nodes.push(o);
+  }
+  function playLoop() {
+    const cfg = PRESETS[currentPreset] || PRESETS.ambient;
+    const bd = 60 / cfg.bpm, now = ctx2.currentTime;
+    const pattern = [0, 2, 4, 2, 1, 3, 1, 4, 0, 3, 2, 4, 1, 0, 3, 2];
+    pattern.forEach((ni, bi) => {
+      const t = now + bi * bd;
+      scheduleNote(cfg.notes[ni % cfg.notes.length], t, bd * 0.8, cfg.vol);
+      if (bi % 4 === 0) scheduleNote(cfg.notes[0] * 0.5, t, bd * 3, cfg.vol * 0.6);
+    });
+    loopTimer = setTimeout(playLoop, (16 * bd - 0.1) * 1000);
+  }
+  function start() { ensureCtx(); stopAll(); playLoop(); playing = true; updateBtn(); }
+  function toggle() { ensureCtx(); if (playing) { stopAll(); playing = false; } else { playLoop(); playing = true; } updateBtn(); if (window.Poki) Poki.syncAudio(playing); }
+  function switchTo(preset) { currentPreset = preset; if (playing) { stopAll(); playLoop(); } }
+  function updateBtn() { const b = document.getElementById('play-btn'); if (b) b.textContent = playing ? '⏸' : '▶'; }
+  function next() {
+    const owned = [...GS.ownedMusic];
+    const cur = owned.findIndex(id => MUSIC_TRACKS.find(m => m.id === id)?.preset === currentPreset);
+    const track = MUSIC_TRACKS.find(m => m.id === owned[(cur + 1) % owned.length]);
+    if (track) { GS.activeMusic = track.id; switchTo(track.preset); document.getElementById('now-playing').textContent = track.name; save(); }
+  }
+  function prev() {
+    const owned = [...GS.ownedMusic];
+    const cur = owned.findIndex(id => MUSIC_TRACKS.find(m => m.id === id)?.preset === currentPreset);
+    const track = MUSIC_TRACKS.find(m => m.id === owned[(cur - 1 + owned.length) % owned.length]);
+    if (track) { GS.activeMusic = track.id; switchTo(track.preset); document.getElementById('now-playing').textContent = track.name; save(); }
+  }
+  return { start, toggle, next, prev, switchTo, isPlaying: () => playing, setVolume, setAdMute };
+})();
+
+window.Music = Music;   // Poki.setAdMute uses window.Music
+
+window.toggleMusic = () => Music.toggle();
+window.nextTrack = () => Music.next();
+window.prevTrack = () => Music.prev();
+
+// ============================================================
+//  CRAFT ENGINE  — with proximity glow, combo hints, easier recipes
+// ============================================================
+const CE = (() => {
+  const craft = document.getElementById('craft-area');
+  const elements = [];
+  let nextId = 0, dragging = null, dragOffX = 0, dragOffY = 0;
+  let lastNoReaction = null, craftStreak = 0;
+
+  function findRecipe(a, b) {
+    const key = [a, b].sort().join('|');
+    for (const r of RECIPES) {
+      if ([r[0], r[1]].sort().join('|') === key) return r[2];
+    }
+    return null;
+  }
+
+  // Check if ANY recipe exists using element a with anything on the board
+  function getBoardCombos(key) {
+    return elements.filter(e => e.key !== key && findRecipe(key, e.key));
+  }
+
+  function spawn(key, x, y, isNew = false) {
+    const d = ELEMENTS[key]; if (!d) return null;
+    const el = document.createElement('div');
+    el.className = 'craft-el' + (isNew ? ' result-pop' : '') + (d.cat === 'ai' ? ' ai-el' : '');
+    el.innerHTML = `<span class="ce-emoji">${d.emoji}</span><span>${d.name}</span>`;
+    const r = craft.getBoundingClientRect();
+    x = Math.max(0, Math.min(r.width - 170, x));
+    y = Math.max(0, Math.min(r.height - 50, y));
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    const obj = { id: nextId++, el, x, y, key };
+    elements.push(obj); craft.appendChild(el); setupDrag(el, obj);
+    return obj;
+  }
+
+  function setupDrag(el, obj) {
+    const down = e => {
+      e.preventDefault();
+      const evt = e.touches ? e.touches[0] : e;
+      const r = craft.getBoundingClientRect();
+      dragOffX = evt.clientX - r.left - obj.x;
+      dragOffY = evt.clientY - r.top - obj.y;
+      dragging = obj; el.style.zIndex = 1000;
+      // Show glow on compatible partners (only if hints are on)
+      if (GS.hintsOn) highlightCompatible(obj.key);
+    };
+    el.addEventListener('mousedown', down);
+    el.addEventListener('touchstart', down, { passive: false });
+  }
+
+  // Glow compatible elements green, incompatible slightly dim
+  function highlightCompatible(key) {
+    elements.forEach(e => {
+      if (e.key === key) return;
+      const canCraft = !!findRecipe(key, e.key);
+      e.el.style.transition = 'box-shadow .2s, opacity .2s';
+      if (canCraft) {
+        e.el.style.boxShadow = '0 0 18px 4px rgba(80,255,120,.7), 0 0 40px rgba(80,255,80,.3)';
+        e.el.style.borderColor = 'rgba(80,255,120,.8)';
+        e.el.style.opacity = '1';
+      } else {
+        e.el.style.boxShadow = '';
+        e.el.style.borderColor = '';
+        e.el.style.opacity = '.45';
+      }
+    });
+  }
+
+  function clearHighlights() {
+    elements.forEach(e => {
+      e.el.style.boxShadow = '';
+      e.el.style.borderColor = '';
+      e.el.style.opacity = '';
+    });
+  }
+
+  function onMove(e) {
+    if (!dragging) return; e.preventDefault();
+    const evt = e.touches ? e.touches[0] : e;
+    const r = craft.getBoundingClientRect();
+    const x = Math.max(0, Math.min(r.width - 170, evt.clientX - r.left - dragOffX));
+    const y = Math.max(0, Math.min(r.height - 50, evt.clientY - r.top - dragOffY));
+    dragging.x = x; dragging.y = y;
+    dragging.el.style.left = x + 'px'; dragging.el.style.top = y + 'px';
+
+    // Live proximity pulse: brighten nearby compatible elements (only if hints are on)
+    if (GS.hintsOn) {
+      const cx = x + 80, cy = y + 22;
+      elements.forEach(e => {
+        if (e.id === dragging.id) return;
+        const dist = Math.hypot(cx - e.x - 80, cy - e.y - 22);
+        const canCraft = !!findRecipe(dragging.key, e.key);
+        if (canCraft && dist < 130) {
+          const intensity = 1 - dist / 130;
+          e.el.style.boxShadow = `0 0 ${20 + intensity * 25}px ${4 + intensity * 8}px rgba(80,255,120,${.5 + intensity * .5}), 0 0 50px rgba(80,255,80,.4)`;
+          e.el.style.transform = `scale(${1 + intensity * .06})`;
+        } else if (canCraft) {
+          e.el.style.boxShadow = '0 0 18px 4px rgba(80,255,120,.55)';
+          e.el.style.transform = '';
+        } else {
+          e.el.style.transform = '';
+        }
+      });
+    }
+  }
+
+  function onUp() {
+    if (!dragging) return;
+    const dropped = dragging; dragging = null;
+    dropped.el.style.zIndex = 20;
+    clearHighlights();
+    if (!Poki.isPaused()) checkCollision(dropped); // block drops during ads/menus
+  }
+
+  function checkCollision(dropped) {
+    if (Poki.isPaused()) return; // extra safety guard
+    const dx = dropped.x + 80, dy = dropped.y + 22;
+    // Larger collision radius = easier to combine
+    for (const other of elements) {
+      if (other.id === dropped.id) continue;
+      if (Math.hypot(dx - other.x - 80, dy - other.y - 22) < 95) {
+        tryCraft(dropped, other); return;
+      }
+    }
+  }
+
+  function tryCraft(a, b) {
+    const result = findRecipe(a.key, b.key);
+    if (!result || !ELEMENTS[result]) {
+      shakeEl(a.el); shakeEl(b.el);
+      craftStreak = 0;
+      // Only show hint/fail feedback if settings allow
+      if (GS.failEmojisOn) autoHint(a.key, b.key);
+      return;
+    }
+    craftStreak++;
+    const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+    spawnParticles(cx + 80, cy + 22);
+    removeEl(a); removeEl(b);
+    const isNew = !GS.discovered.has(result);
+    GS.discovered.add(result);
+    if (isNew) {
+      GS.newDisc.add(result);
+      showDiscovery(result);
+      awardCoins(25);
+      checkBgUnlock(result);
+      // After a new discovery, hint at what it can make (only if hints on)
+      if (GS.hintsOn) setTimeout(() => suggestNext(result), 1800);
+    } else {
+      awardCoins(GS.doubleCoinsLeft > 0 ? 10 : 5);
+      // Streak bonus
+      if (craftStreak >= 3) { awardCoins(5); if (craftStreak % 3 === 0) { const sb=document.getElementById('streak-banner'); if(sb){sb.textContent=`🔥 ×${craftStreak} STREAK! +5`;sb.classList.add('show');setTimeout(()=>sb.classList.remove('show'),1800);} } }
+    }
+    if (GS.doubleCoinsLeft > 0) GS.doubleCoinsLeft--;
+    Poki.onCraft();
+    const spawned = spawn(result, cx, cy, true);
+    // Immediately show compatible partners for the new element (only if hints on)
+    if (spawned && isNew && GS.hintsOn) setTimeout(() => highlightBoardFor(result), 600);
+    renderList(); updateDiscCount(); save();
+    _sh = _hash(GS.coins, GS.discovered);
+  }
+
+  // When no reaction: tell the player what each element CAN make with things on the board
+  function autoHint(keyA, keyB) {
+    const combosA = elements.filter(e => e.key !== keyA && findRecipe(keyA, e.key));
+    const combosB = elements.filter(e => e.key !== keyB && findRecipe(keyB, e.key));
+    const dA = ELEMENTS[keyA], dB = ELEMENTS[keyB];
+    // If hints are on, show specific combo advice
+    if (GS.hintsOn) {
+      if (combosA.length) {
+        const partner = combosA[Math.floor(Math.random() * combosA.length)];
+        const res = findRecipe(keyA, partner.key);
+        showCombo(`💡 ${dA.emoji} + ${ELEMENTS[partner.key].emoji} → ${ELEMENTS[res]?.emoji || '?'}`, '#ffe066');
+        return;
+      } else if (combosB.length) {
+        const partner = combosB[Math.floor(Math.random() * combosB.length)];
+        const res = findRecipe(keyB, partner.key);
+        showCombo(`💡 ${dB.emoji} + ${ELEMENTS[partner.key].emoji} → ${ELEMENTS[res]?.emoji || '?'}`, '#ffe066');
+        return;
+      }
+      const undiscovered = RECIPES.filter(r =>
+        GS.discovered.has(r[0]) && GS.discovered.has(r[1]) && !GS.discovered.has(r[2])
+      );
+      if (undiscovered.length) {
+        const pick = undiscovered[Math.floor(Math.random() * Math.min(undiscovered.length, 8))];
+        const a2 = ELEMENTS[pick[0]], b2 = ELEMENTS[pick[1]];
+        showCombo(`💡 Try: ${a2.emoji}${a2.name} + ${b2.emoji}${b2.name}`, '#ffe066');
+        return;
+      }
+    }
+    // failEmojisOn controls the "no reaction" message itself
+    if (GS.failEmojisOn) {
+      showCombo('🤷 No reaction — try the AI Craft!', 'rgba(255,255,255,.5)');
+    }
+  }
+
+  // After discovering an element, flash green glow on any board elements it can combine with
+  function highlightBoardFor(key) {
+    elements.forEach(e => {
+      if (e.key === key) return;
+      if (findRecipe(key, e.key)) {
+        e.el.style.transition = 'box-shadow .3s';
+        e.el.style.boxShadow = '0 0 22px 6px rgba(80,255,120,.8)';
+        setTimeout(() => { e.el.style.boxShadow = ''; }, 1500);
+      }
+    });
+  }
+
+  // Suggest what a newly discovered element can make
+  function suggestNext(key) {
+    const possible = RECIPES.filter(r =>
+      (r[0] === key || r[1] === key) && !GS.discovered.has(r[2])
+    );
+    if (!possible.length) return;
+    const pick = possible[Math.floor(Math.random() * Math.min(possible.length, 5))];
+    const partner = pick[0] === key ? pick[1] : pick[0];
+    const pEl = ELEMENTS[partner];
+    if (!pEl) return;
+    const known = GS.discovered.has(partner);
+    const kEl = ELEMENTS[key];
+    if (known) {
+      showCombo(`✨ ${kEl.emoji} + ${pEl.emoji}${pEl.name} = ?`, '#c890ff');
+    }
+  }
+
+  function checkBgUnlock(key) {
+    BACKGROUNDS.forEach(bg => {
+      if (bg.unlockAt === key && !GS.ownedBgs.has(bg.id))
+        setTimeout(() => showCombo(`🎨 ${bg.name} BG unlockable!`, '#a0b4ff'), 900);
+    });
+  }
+
+  function removeEl(obj) { obj.el.remove(); const i = elements.indexOf(obj); if (i >= 0) elements.splice(i, 1); }
+  function shakeEl(el) {
+    el.style.transition = 'transform .08s'; el.style.transform = 'translateX(-6px)';
+    setTimeout(() => el.style.transform = 'translateX(6px)', 80);
+    setTimeout(() => { el.style.transform = ''; el.style.transition = ''; }, 160);
+  }
+  function clearAll() { elements.forEach(o => o.el.remove()); elements.length = 0; }
+  function addStarters() {
+    const r = craft.getBoundingClientRect(), W = r.width || 600, H = r.height || 400;
+    // Place starters in a nice arc in the center
+    const cx = W / 2, cy = H / 2;
+    STARTERS.forEach((k, i) => {
+      const angle = (i / STARTERS.length) * Math.PI * 2 - Math.PI / 2;
+      const rx = cx + Math.cos(angle) * 150 - 60;
+      const ry = cy + Math.sin(angle) * 100 - 20;
+      spawn(k, rx, ry);
+    });
+    // Show first hint after 2 seconds (only if hints are on)
+    setTimeout(() => {
+      if (GS.hintsOn) showCombo('💡 Drag Fire + Water together!', '#ffe066');
+    }, 2000);
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('touchend', onUp);
+
+  return { spawn, clearAll, addStarters, elements, highlightBoardFor };
+})();
+
+window.CE = CE;
+
+// ── SUGGEST / HINT ──
+let suggestCooldown = false;
+window.doSuggest = function() {
+  if (suggestCooldown) return;
+  suggestCooldown = true;
+  setTimeout(() => suggestCooldown = false, 3000);
+
+  // Find up to 5 undiscovered recipes using currently discovered elements
+  const available = RECIPES.filter(r =>
+    GS.discovered.has(r[0]) && GS.discovered.has(r[1]) && !GS.discovered.has(r[2])
+  );
+  if (!available.length) {
+    showCombo('🤖 Use AI Craft to make new things!', '#c890ff');
+    return;
+  }
+  // Pick a random undiscovered one and spawn both ingredients on the board
+  const pick = available[Math.floor(Math.random() * Math.min(available.length, 10))];
+  const craft = document.getElementById('craft-area');
+  const r = craft.getBoundingClientRect();
+  const cx = r.width / 2, cy = r.height / 2;
+  // Remove existing of these types to avoid clutter
+  const existing = CE.elements.filter(e => e.key === pick[0] || e.key === pick[1]);
+  // Spawn the two ingredients highlighted
+  const a = CE.spawn(pick[0], cx - 130, cy - 30);
+  const b = CE.spawn(pick[1], cx + 30, cy - 30);
+  const el0 = ELEMENTS[pick[0]], el1 = ELEMENTS[pick[1]];
+  showCombo(`💡 Try: ${el0.emoji} + ${el1.emoji} → ?`, '#ffe066');
+  // Pulse them
+  [a, b].forEach(obj => {
+    if (!obj) return;
+    obj.el.style.transition = 'box-shadow .3s';
+    obj.el.style.boxShadow = '0 0 25px 8px rgba(255,230,100,.9)';
+    setTimeout(() => { if (obj.el) obj.el.style.boxShadow = ''; }, 2000);
+  });
+};
+
+// ── QUICK DOUBLE-TAP SIDEBAR ITEM spawns it ──
+
+// Sidebar drag
+function initSidebarDrag() {
+  const panel = document.getElementById('elements-list');
+  let dragData = null, ghost = null;
+  panel.addEventListener('mousedown', e => {
+    const item = e.target.closest('.element-item');
+    if (!item) return;
+    dragData = { key: item.dataset.key };
+    ghost = item.cloneNode(true);
+    ghost.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:scale(.88);transition:none;border-radius:9px;background:rgba(20,20,40,.95);border:1px solid rgba(255,255,255,.2);padding:7px 10px;font-size:12px;font-weight:600;color:white;display:flex;align-items:center;gap:6px;';
+    document.body.appendChild(ghost); moveGhost(e);
+  });
+  document.addEventListener('mousemove', e => { if (ghost) moveGhost(e); });
+  document.addEventListener('mouseup', e => {
+    if (!ghost || !dragData) return;
+    const craft = document.getElementById('craft-area'), r = craft.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)
+      CE.spawn(dragData.key, e.clientX - r.left - 60, e.clientY - r.top - 20);
+    ghost.remove(); ghost = null; dragData = null;
+  });
+  function moveGhost(e) { ghost.style.left = (e.clientX - 60) + 'px'; ghost.style.top = (e.clientY - 20) + 'px'; }
+}
+
+// ============================================================
+//  UI
+// ============================================================
+function awardCoins(amt) {
+  const n = Math.floor(amt * (GS.doubleCoinsLeft > 0 ? 2 : 1));
+  GS.coins += n; updateCoinUI(); if (n >= 15) floatCoins(n);
+}
+function updateCoinUI() {
+  ['coin-count', 'shop-coins', 'ai-coins'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = GS.coins.toLocaleString(); });
+}
+function floatCoins(n) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;right:180px;top:62px;color:#ffd700;font-family:Orbitron,monospace;font-size:15px;font-weight:900;pointer-events:none;z-index:500;animation:comboAnim 1s ease forwards;display:flex;align-items:center;gap:4px;`;
+  el.innerHTML = `+${n} <span class="coin-icon-sm">✦</span>`;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 1100);
+}
+let toastTimer;
+function showDiscovery(key) {
+  const d = ELEMENTS[key];
+  const toast = document.getElementById('discovery-toast');
+  toast.innerHTML = `✨ NEW: ${d.emoji} <strong>${d.name}</strong> +25<span class="coin-icon-sm" style="margin-left:3px;">✦</span>`;
+  toast.classList.add('show'); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+function showCombo(text, color = '#ffd700', x, y) {
+  const el = document.createElement('div');
+  el.className = 'combo-text'; el.style.color = color;
+  el.style.top = (y ? Math.min(y + 80, window.innerHeight - 80) : Math.floor(window.innerHeight * .4)) + 'px';
+  el.textContent = text; document.body.appendChild(el); setTimeout(() => el.remove(), 1300);
+}
+function spawnParticles(x, y) {
+  const cols = ['#ffd700','#ff6b35','#c850c0','#667eea','#50c850','#00aaff','#ff4488'];
+  const craft = document.getElementById('craft-area');
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div'); p.className = 'particle';
+    const angle = (i / 14) * Math.PI * 2, dist = 45 + Math.random() * 45;
+    p.style.cssText = `left:${x}px;top:${y}px;background:${cols[i%cols.length]};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;`;
+    craft.appendChild(p); setTimeout(() => p.remove(), 700);
+  }
+}
+function updateDiscCount() {
+  const total = Object.keys(ELEMENTS).length;
+  document.getElementById('disc-num').textContent = GS.discovered.size;
+  document.getElementById('total-num').textContent = total;
+}
+function renderList() {
+  const list = document.getElementById('elements-list');
+  const q = GS.searchQ.toLowerCase(), f = GS.activeFilter;
+  const keys = [...GS.discovered].sort((a, b) => {
+    const an = GS.newDisc.has(a) ? 1 : 0, bn = GS.newDisc.has(b) ? 1 : 0;
+    if (bn !== an) return bn - an;
+    return (ELEMENTS[a]?.name || a).localeCompare(ELEMENTS[b]?.name || b);
+  }).filter(k => {
+    const d = ELEMENTS[k]; if (!d) return false;
+    if (f !== 'all' && d.cat !== f) return false;
+    if (q && !d.name.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('panel-label').textContent = `ELEMENTS (${GS.discovered.size})`;
+  list.innerHTML = '';
+  keys.forEach(key => {
+    const d = ELEMENTS[key], isNew = GS.newDisc.has(key), isAI = d.cat === 'ai';
+    const item = document.createElement('div'); item.className = 'element-item'; item.dataset.key = key;
+    item.innerHTML = `<span class="e-icon">${d.emoji}</span><span class="e-name">${d.name}</span>${isNew ? '<span class="new-badge">NEW</span>' : ''}${isAI ? '<span class="ai-badge">AI</span>' : ''}`;
+    item.addEventListener('dblclick', () => {
+      const r = document.getElementById('craft-area').getBoundingClientRect();
+      CE.spawn(key, Math.random() * (r.width - 200) + 30, Math.random() * (r.height - 100) + 20);
+    });
+    list.appendChild(item);
+  });
+}
+
+// ============================================================
+//  SHOP
+// ============================================================
+function openShop(tab = 'backgrounds') { openModal('shop-modal'); shopTab(document.querySelector(`.modal-tab[data-tab="${tab}"]`), tab); }
+function shopTab(el, tab) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderShopContent(tab);
+}
+function renderShopContent(tab) {
+  updateCoinUI();
+  const body = document.getElementById('shop-body');
+  if (tab === 'backgrounds') renderBgShop(body);
+  else if (tab === 'boosters') renderBoosterShop(body);
+  else if (tab === 'music') renderMusicShop(body);
+  else if (tab === 'upload') renderUploadBgShop(body);
+  else if (tab === 'creator') renderCreatorShop(body);
+}
+
+const CUSTOM_BG_PRICE = 3000; // expensive!
+
+function renderUploadBgShop(body) {
+  const slots = 5; // max custom BG slots
+  const used = GS.customBgs.length;
+  const canAfford = GS.coins >= CUSTOM_BG_PRICE;
+
+  body.innerHTML = `
+    <div style="padding:18px 16px 4px;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-family:'Orbitron',monospace;font-size:13px;color:rgba(255,255,255,.6);letter-spacing:1px;margin-bottom:6px;">🖼️ CUSTOM BACKGROUND STUDIO</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.35);line-height:1.6;">Upload any image as your personal background.<br>It will parallax-shift with your mouse just like the built-in backgrounds.</div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <div style="background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:5px 14px;font-size:13px;color:#ffd700;font-weight:700;">
+            <span class="coin-icon-sm">✦</span> ${CUSTOM_BG_PRICE.toLocaleString()} per slot
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.3);">${used}/${slots} slots used</div>
+        </div>
+      </div>
+
+      <!-- Existing custom BGs -->
+      <div id="custom-bg-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:18px;"></div>
+
+      <!-- Buy new slot -->
+      ${used < slots ? `
+        <div style="text-align:center;">
+          <div id="upload-drop-zone" style="border:2px dashed rgba(255,255,255,.15);border-radius:16px;padding:28px 16px;cursor:pointer;transition:all .2s;${canAfford?'':'opacity:.45;cursor:not-allowed;'}"
+            onclick="${canAfford ? 'triggerBgUpload()' : 'showCombo(\'NOT ENOUGH COINS\',\'#ff6060\')'}"
+            ondragover="event.preventDefault();this.style.borderColor='rgba(102,126,234,.7)'"
+            ondragleave="this.style.borderColor='rgba(255,255,255,.15)'"
+            ondrop="handleBgDrop(event)">
+            <div style="font-size:36px;margin-bottom:8px;">${canAfford ? '📸' : '🔒'}</div>
+            <div style="font-size:13px;font-weight:700;color:${canAfford?'white':'rgba(255,255,255,.4)'};">
+              ${canAfford ? 'Click or drag an image here' : 'Not enough coins'}
+            </div>
+            <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:5px;">JPG, PNG, GIF, WebP — any size</div>
+            ${canAfford ? `<div style="margin-top:10px;display:inline-flex;align-items:center;gap:5px;background:rgba(102,126,234,.2);border:1px solid rgba(102,126,234,.4);border-radius:10px;padding:5px 14px;font-size:12px;color:#a0b4ff;"><span class="coin-icon-sm">✦</span> Buy slot for ${CUSTOM_BG_PRICE.toLocaleString()}</div>` : ''}
+          </div>
+          <input type="file" id="bg-file-input" accept="image/*" style="display:none" onchange="handleBgFile(this)">
+        </div>
+      ` : `<div style="text-align:center;padding:16px;color:rgba(255,255,255,.35);font-size:12px;">All ${slots} custom slots used. Delete one to upload a new background.</div>`}
+    </div>
+  `;
+
+  // Render existing custom bgs
+  const grid = document.getElementById('custom-bg-grid');
+  if (!grid) return;
+  if (GS.customBgs.length === 0) {
+    grid.innerHTML = '<div style="color:rgba(255,255,255,.25);font-size:12px;text-align:center;padding:8px;grid-column:1/-1;">No custom backgrounds yet</div>';
+  } else {
+    GS.customBgs.forEach(bg => {
+      const isActive = GS.activeBg === bg.id;
+      const card = document.createElement('div');
+      card.style.cssText = `position:relative;border-radius:12px;overflow:hidden;border:2px solid ${isActive?'rgba(102,126,234,.8)':'rgba(255,255,255,.1)'};cursor:pointer;transition:all .2s;`;
+      card.innerHTML = `
+        <div style="position:relative;height:90px;background:#111;">
+          <img src="${bg.dataUrl}" style="width:100%;height:100%;object-fit:cover;opacity:.85;" alt="${bg.name}">
+          ${isActive ? '<div style="position:absolute;inset:0;background:rgba(102,126,234,.25);display:flex;align-items:center;justify-content:center;font-size:22px;">✅</div>' : ''}
+        </div>
+        <div style="padding:6px 8px;background:rgba(0,0,0,.7);">
+          <div style="font-size:11px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${bg.name}</div>
+          <div style="display:flex;gap:4px;margin-top:4px;">
+            <button onclick="event.stopPropagation();applyCustomBg('${bg.id}')" style="flex:1;background:rgba(102,126,234,.25);border:1px solid rgba(102,126,234,.4);border-radius:6px;color:#a0b4ff;font-size:10px;padding:3px;cursor:pointer;">USE</button>
+            <button onclick="event.stopPropagation();deleteCustomBg('${bg.id}')" style="background:rgba(255,60,60,.2);border:1px solid rgba(255,60,60,.3);border-radius:6px;color:#ff8080;font-size:10px;padding:3px 5px;cursor:pointer;">✕</button>
+          </div>
+        </div>
+      `;
+      card.addEventListener('click', () => applyCustomBg(bg.id));
+      grid.appendChild(card);
+    });
+  }
+}
+
+window.triggerBgUpload = function() {
+  const inp = document.getElementById('bg-file-input');
+  if (inp) inp.click();
+};
+
+window.handleBgDrop = function(e) {
+  e.preventDefault();
+  const dropZone = document.getElementById('upload-drop-zone');
+  if (dropZone) dropZone.style.borderColor = 'rgba(255,255,255,.15)';
+  const file = e.dataTransfer?.files?.[0];
+  if (file && file.type.startsWith('image/')) processBgFile(file);
+  else showCombo('⚠️ Image files only!', '#ff8080');
+};
+
+window.handleBgFile = function(input) {
+  const file = input?.files?.[0];
+  if (file) processBgFile(file);
+};
+
+function processBgFile(file) {
+  if (GS.coins < CUSTOM_BG_PRICE) { showCombo('NOT ENOUGH COINS', '#ff6060'); return; }
+  if (GS.customBgs.length >= 5) { showCombo('All 5 slots full!', '#ff8080'); return; }
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    // Compress image to max 800px wide to save localStorage space
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 1200, maxH = 900;
+      let {width: w, height: h} = img;
+      if (w > maxW || h > maxH) {
+        const scale = Math.min(maxW/w, maxH/h);
+        w = Math.round(w*scale); h = Math.round(h*scale);
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+      // Prompt for name
+      const rawName = file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g,' ').slice(0,24);
+      const name = rawName.charAt(0).toUpperCase() + rawName.slice(1) || 'My Background';
+      const id = 'custom_bg_' + Date.now();
+
+      const bg = { id, name, emoji: '🖼️', dataUrl,
+        colors: ['#111', '#222', '#000'],
+        interact: 'Click for star effects',
+        interactFn: 'starBurst', price: 0, owned: true, isCustom: true };
+      bg._img = img;
+
+      GS.coins -= CUSTOM_BG_PRICE;
+      GS.customBgs.push(bg);
+      BACKGROUNDS.push(bg);
+      GS.ownedBgs.add(id);
+      GS.activeBg = id;
+      BG.setBg(id);
+      updateCoinUI(); save();
+
+      showCombo(`🖼️ "${name}" added!`, '#a0d4ff');
+      renderShopContent('upload');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+window.applyCustomBg = function(id) {
+  GS.activeBg = id; BG.setBg(id); save();
+  renderShopContent('upload');
+  showCombo('🖼️ Custom background applied!', '#a0d4ff');
+};
+
+window.deleteCustomBg = function(id) {
+  const idx = GS.customBgs.findIndex(b => b.id === id);
+  if (idx < 0) return;
+  GS.customBgs.splice(idx, 1);
+  const bgIdx = BACKGROUNDS.findIndex(b => b.id === id);
+  if (bgIdx >= 0) BACKGROUNDS.splice(bgIdx, 1);
+  GS.ownedBgs.delete(id);
+  localStorage.removeItem('ie6_bg_' + id);
+  if (GS.activeBg === id) { GS.activeBg = 'space'; BG.setBg('space'); }
+  save();
+  renderShopContent('upload');
+  showCombo('🗑️ Background deleted', 'rgba(255,255,255,.5)');
+};
+function renderBgShop(body) {
+  body.innerHTML = '<div class="shop-grid" id="bg-grid"></div>';
+  const grid = document.getElementById('bg-grid');
+  BACKGROUNDS.forEach(bg => {
+    const isOwned = GS.ownedBgs.has(bg.id), isActive = GS.activeBg === bg.id;
+    const canUnlock = !bg.unlockAt || GS.discovered.has(bg.unlockAt);
+    const item = document.createElement('div');
+    item.className = 'shop-item' + (isOwned ? ' owned-item' : '') + (isActive ? ' active-item' : '') + ((!isOwned && !canUnlock) ? ' locked-item' : '');
+    // Custom image backgrounds get a thumbnail preview
+    const previewStyle = bg.isCustom
+      ? `background:#111;background-image:url(${bg.dataUrl});background-size:cover;background-position:center;`
+      : `background:radial-gradient(circle at 35% 40%,${bg.colors[1]},${bg.colors[0]});`;
+    let price = '';
+    if (isActive) price = `<div class="si-price p-owned">✅ ACTIVE</div>`;
+    else if (isOwned) price = `<div class="si-price p-owned">▶ APPLY</div>`;
+    else if (!canUnlock) price = `<div class="si-price p-locked">🔒 Discover ${bg.unlockAt}</div>`;
+    else price = `<div class="si-price${GS.coins < bg.price ? ' p-locked' : ''}"><span class="coin-icon-sm">✦</span> ${bg.price.toLocaleString()}</div>`;
+    const descText = bg.isCustom ? '📸 Custom upload' : bg.desc;
+    const interactText = bg.isCustom ? 'Your personal background' : bg.interact;
+    item.innerHTML = `<div class="si-preview" style="${previewStyle}">${bg.isCustom ? '' : bg.emoji}</div><div class="si-name">${bg.name}</div><div class="si-desc">${descText}</div>${price}<div class="si-interact">${interactText}</div>`;
+    if (isOwned && !isActive) item.addEventListener('click', () => { GS.activeBg = bg.id; BG.setBg(bg.id); save(); renderShopContent('backgrounds'); });
+    else if (!isOwned && canUnlock) item.addEventListener('click', () => {
+      if (GS.coins < bg.price) { showCombo('NOT ENOUGH COINS', '#ff6060'); return; }
+      GS.coins -= bg.price; GS.ownedBgs.add(bg.id); bg.owned = true;
+      GS.activeBg = bg.id; BG.setBg(bg.id); updateCoinUI(); save();
+      renderShopContent('backgrounds'); showCombo(`🎨 ${bg.name} UNLOCKED!`, '#a0b4ff');
+    });
+    grid.appendChild(item);
+  });
+}
+function renderBoosterShop(body) {
+  const bst = [
+    { id: 'double', emoji: '⚡', name: 'Double Coins', desc: '2× coins for 20 crafts', price: 100 },
+    { id: 'hint1', emoji: '💡', name: 'Recipe Hint', desc: 'Reveals one new combo', price: 50 },
+    { id: 'hint3', emoji: '🔮', name: 'Mega Hint ×3', desc: 'Reveals 3 new combos', price: 120 },
+    { id: 'clear', emoji: '♻️', name: 'Fresh Start', desc: 'Clear board, respawn starters', price: 30 },
+    { id: 'coins50', emoji: '🎁', name: 'Coin Pack 50', desc: 'Instantly get 50 coins', price: 0 },
+    { id: 'rewarded', emoji: '📺', name: 'Watch Ad +200', desc: 'Watch an ad for 200 coins', price: 0 },
+  ];
+  body.innerHTML = `<div class="shop-grid">${bst.map(b => `
+    <div class="shop-item" onclick="applyBooster('${b.id}')">
+      <div class="si-preview" style="background:rgba(255,255,255,.04);font-size:32px;">${b.emoji}</div>
+      <div class="si-name">${b.name}</div><div class="si-desc">${b.desc}</div>
+      <div class="si-price">${b.price === 0 ? 'FREE' : `<span class="coin-icon-sm">✦</span> ${b.price}`}</div>
+    </div>`).join('')}</div>`;
+}
+function renderMusicShop(body) {
+  body.innerHTML = `<div style="margin-bottom:10px;font-size:11px;color:rgba(255,255,255,.35);letter-spacing:1px;">🎵 ALL MUSIC IS PROCEDURALLY GENERATED — ORIGINAL & ROYALTY-FREE</div><div class="shop-grid">`;
+  MUSIC_TRACKS.forEach(track => {
+    const isOwned = GS.ownedMusic.has(track.id), isActive = GS.activeMusic === track.id;
+    const item = document.createElement('div');
+    item.className = 'shop-item' + (isOwned ? ' owned-item' : '') + (isActive ? ' active-item' : '');
+    item.innerHTML = `<div class="si-preview" style="background:linear-gradient(135deg,rgba(80,0,120,.4),rgba(0,40,80,.4));font-size:30px;">${track.emoji}</div>
+      <div class="si-name">${track.name}</div><div class="si-desc">${track.desc}</div>
+      <div class="si-price ${isActive ? '' : isOwned ? 'p-owned' : GS.coins < track.price ? 'p-locked' : ''}">
+        ${isActive ? '🎵 PLAYING' : isOwned ? '▶ PLAY' : `<span class="coin-icon-sm">✦</span> ${track.price}`}
+      </div>`;
+    item.addEventListener('click', () => {
+      if (!isOwned) {
+        if (GS.coins < track.price) { showCombo('NOT ENOUGH COINS', '#ff6060'); return; }
+        GS.coins -= track.price; GS.ownedMusic.add(track.id); track.owned = true;
+        updateCoinUI(); save(); showCombo(`🎵 ${track.name} UNLOCKED!`, '#cc88ff');
+      }
+      GS.activeMusic = track.id; Music.switchTo(track.preset);
+      document.getElementById('now-playing').textContent = track.name; save();
+      renderShopContent('music');
+    });
+    body.appendChild(item);
+  });
+}
+const EMOJI_POOL = ['🌟','🔥','💧','🌍','💨','🧪','⚗️','🌈','✨','🌀','💫','⚡','🌸','🍄','🐉','🦄','🔮','💎','👑','🗡️','🏰','🌋','⛰️','🌊','❄️','🌵','🦁','🐺','🦅','🐠','🤖','🧠','🚀','🛸','⭐','🌙','☀️','🌌','⏳','∞','Ω','💥','🕳️','🌑','🌠','🪐','🏆','🎨','🎵','📚','🧬','⚙️','🔧','💡','🔋','📱','💻','🌐','⚔️','🛡️','🧙','🧜','🧛','🧟','🦸','🧝','🎭','🎪','🏛️','🗿','🌺','🍀','🌿','🌾','🦋','🐬','🦈','🦊','🐸','🐲','🍕','🍔','🌮','🍣','🎸','🎹','🎺','🥁','🎻','🎬','🎮','🎯','🎲','🃏','🧩'];
+function renderCreatorShop(body) {
+  let selEmoji = '🌟';
+  body.innerHTML = `
+    <div class="creator-wrap">
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px;">Create your own unique element for <span style="color:#ffd700;display:inline-flex;align-items:center;gap:3px;"><span class="coin-icon-sm">✦</span> 50</span></div>
+      <div class="creator-field"><label>ELEMENT NAME</label><input class="creator-input" id="c-name" placeholder="e.g. Crystal Phoenix Dragon" maxlength="24"></div>
+      <div class="creator-field"><label>CHOOSE EMOJI</label>
+        <div class="emoji-grid" id="c-emoji-grid"></div>
+        <input class="creator-input" id="c-emoji-manual" placeholder="Or type any emoji" style="margin-top:6px;" maxlength="4">
+      </div>
+      <div class="creator-field"><label>PREVIEW</label>
+        <div class="creator-preview"><span class="e-icon" id="c-prev-em">🌟</span><div><div style="font-size:14px;font-weight:700;color:white;" id="c-prev-name">Your Element</div><div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px;">Custom Element</div></div></div>
+      </div>
+      <button class="create-btn" id="c-create-btn" onclick="doCreateCustom()">✨ CREATE ELEMENT (<span class="coin-icon-sm">✦</span> 50)</button>
+    </div>`;
+  const grid = document.getElementById('c-emoji-grid');
+  EMOJI_POOL.forEach(em => {
+    const btn = document.createElement('div'); btn.className = 'ep-btn' + (em === selEmoji ? ' selected' : '');
+    btn.textContent = em;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected'); selEmoji = em;
+      document.getElementById('c-prev-em').textContent = em;
+      document.getElementById('c-emoji-manual').value = '';
+    });
+    grid.appendChild(btn);
+  });
+  document.getElementById('c-name').addEventListener('input', e => { document.getElementById('c-prev-name').textContent = e.target.value || 'Your Element'; });
+  document.getElementById('c-emoji-manual').addEventListener('input', e => {
+    const em = [...e.target.value][0]; if (em) { selEmoji = em; document.getElementById('c-prev-em').textContent = em; }
+  });
+  window._getSelEmoji = () => selEmoji;
+}
+window.doCreateCustom = function() {
+  const name = document.getElementById('c-name').value.trim();
+  const emoji = window._getSelEmoji?.() || '🌟';
+  if (!name) { showCombo('⚠️ Enter a name!', '#ffaa44'); return; }
+  if (GS.coins < 50) { showCombo('NOT ENOUGH COINS', '#ff6060'); return; }
+  const id = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) + '_' + (Date.now() % 9999);
+  ELEMENTS[id] = { emoji, name, cat: 'custom' };
+  GS.discovered.add(id); GS.newDisc.add(id);
+  GS.customElements.push({ id, emoji, name });
+  GS.coins -= 50; updateCoinUI(); renderList(); updateDiscCount(); save();
+  showDiscovery(id); showCombo(`🎨 ${emoji} ${name} CREATED!`, '#f0c040');
+  _sh = _hash(GS.coins, GS.discovered);
+};
+window.applyBooster = function(id) {
+  const costs = { double: 100, hint1: 50, hint3: 120, clear: 30, coins50: 0, rewarded: 0 };
+  if ((costs[id] || 0) > GS.coins) { showCombo('NOT ENOUGH COINS', '#ff6060'); return; }
+  GS.coins -= costs[id] || 0;
+  if (id === 'double') { GS.doubleCoinsLeft += 20; showCombo('⚡ 2× COINS FOR 20 CRAFTS!', '#ffd700'); }
+  else if (id === 'hint1') giveHints(1);
+  else if (id === 'hint3') giveHints(3);
+  else if (id === 'clear') { CE.clearAll(); CE.addStarters(); showCombo('♻️ FRESH START!', '#80ff80'); }
+  else if (id === 'coins50') { GS.coins += 50; showCombo('+50 ✦ RECEIVED!', '#ffd700'); }
+  else if (id === 'rewarded') { Poki.showRewardedAd(() => { GS.coins += 200; updateCoinUI(); save(); showCombo('+200 ✦ REWARD!', '#ffd700'); }); return; }
+  updateCoinUI(); save();
+};
+function giveHints(count) {
+  const disc = [...GS.discovered], hints = [];
+  for (const r of RECIPES) {
+    if (disc.includes(r[0]) && disc.includes(r[1]) && ELEMENTS[r[2]] && !GS.discovered.has(r[2])) hints.push(r);
+  }
+  const picked = hints.sort(() => Math.random() - .5).slice(0, count);
+  if (!picked.length) { showCombo('🤔 No hints!', '#aaa'); return; }
+  picked.forEach((r, i) => setTimeout(() => {
+    const a = ELEMENTS[r[0]], b = ELEMENTS[r[1]], c = ELEMENTS[r[2]];
+    showCombo(`💡 ${a.emoji}+${b.emoji}→${c.emoji}${c.name}`, '#ffffaa');
+  }, i * 1500));
+}
+
+// ============================================================
+//  AI CRAFT MODAL
+// ============================================================
+function renderAIModal() {
+  const body = document.getElementById('ai-body');
+  body.innerHTML = `
+    <div class="ai-wrap">
+      <div class="ai-desc">Describe <span>ANYTHING</span> and AI will create it as a game element. Pizza, Batman, Existential Crisis, Quantum Pancake — literally anything in the universe! Costs <span class="coin-icon-sm" style="margin:0 2px;">✦</span><span style="color:#ffd700">30 coins</span> per creation.</div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="ai-prompt" placeholder="Describe anything... Pizza Dragon? Nuclear Sandwich? Your cat?" maxlength="80">
+        <button class="ai-btn-go" id="ai-go-btn" onclick="doAICreate()">✨ CREATE</button>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:-6px;letter-spacing:.5px;">💡 SUGGESTIONS — click to try:</div>
+      <div class="ai-suggestions" id="ai-sugs"></div>
+      <div id="ai-result-area"></div>
+    </div>`;
+  const sugsEl = document.getElementById('ai-sugs');
+  AI.SUGGESTIONS.forEach(s => {
+    const el = document.createElement('div'); el.className = 'ai-sug';
+    el.innerHTML = `<span class="as-emoji">✨</span>${s.name}<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:3px;">${s.hint}</div>`;
+    el.addEventListener('click', () => { document.getElementById('ai-prompt').value = s.name; doAICreate(); });
+    sugsEl.appendChild(el);
+  });
+  document.getElementById('ai-prompt').addEventListener('keydown', e => { if (e.key === 'Enter') doAICreate(); });
+}
+
+window.doAICreate = async function() {
+  const prompt = document.getElementById('ai-prompt')?.value?.trim();
+  if (!prompt) { showCombo('⚠️ Describe something!', '#ffaa44'); return; }
+  if (GS.coins < 30) { showCombo('NOT ENOUGH COINS', '#ff6060'); return; }
+  const btn = document.getElementById('ai-go-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
+  document.getElementById('ai-thinking').classList.add('show');
+  const result = await AI.create(prompt);
+  document.getElementById('ai-thinking').classList.remove('show');
+  if (btn) { btn.disabled = false; btn.textContent = '✨ CREATE'; }
+  GS.coins -= 30; updateCoinUI(); save();
+  // Show result
+  const area = document.getElementById('ai-result-area');
+  if (!area) return;
+  const rid = area.innerHTML = `
+    <div class="ai-result">
+      <span class="ar-emoji">${result.emoji}</span>
+      <div class="ar-name">${result.name}</div>
+      <div class="ar-desc">${result.desc || 'A mysterious new element from the AI forge.'}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:12px;">✨ ${result.rarity?.toUpperCase() || 'RARE'} • ${result.cat?.toUpperCase() || 'AI'}</div>
+      <button class="ar-add" onclick="addAIElement('${result.emoji}','${result.name?.replace(/'/g,"\\'")}','${(result.desc||'').replace(/'/g,"\\'").slice(0,80)}','${result.cat||"ai"}')">⚗️ ADD TO COLLECTION</button>
+    </div>`;
+};
+
+window.addAIElement = function(emoji, name, desc, cat) {
+  const id = 'ai_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) + '_' + (Date.now() % 9999);
+  ELEMENTS[id] = { emoji, name, cat: cat === 'ai' ? 'ai' : cat, desc };
+  GS.discovered.add(id); GS.newDisc.add(id);
+  GS.aiElements.push({ id, emoji, name, desc, cat });
+  renderList(); updateDiscCount(); save();
+  showDiscovery(id); showCombo(`🤖 ${emoji} ${name} ADDED!`, '#c890f0');
+  _sh = _hash(GS.coins, GS.discovered);
+  document.getElementById('ai-result-area').innerHTML = '';
+  document.getElementById('ai-prompt').value = '';
+};
+
+// ============================================================
+//  LEADERBOARD
+// ============================================================
+function renderLeaderboard() {
+  const body = document.getElementById('lb-body');
+  const myScore = GS.discovered.size, myName = localStorage.getItem('ie3_name') || '';
+  const sim = [
+    { name: 'QuantumCrafter', score: 187, badge: '🏆' },
+    { name: 'ElementMaster', score: 162, badge: '⭐' },
+    { name: 'CosmicForge', score: 145, badge: '🌌' },
+    { name: 'AlchemyKing', score: 131, badge: '🔮' },
+    { name: 'StarWeaver', score: 119, badge: '💫' },
+    { name: 'VoidWalker', score: 108, badge: '🕳️' },
+    { name: 'FireLord', score: 97, badge: '🔥' },
+    { name: 'OceanSage', score: 89, badge: '🌊' },
+    { name: 'NatureKeeper', score: 78, badge: '🌿' },
+    { name: 'TechWizard', score: 65, badge: '🤖' },
+  ];
+  const all = [...sim];
+  if (myName) {
+    const ex = all.findIndex(p => p.name === myName);
+    if (ex >= 0) all[ex].score = Math.max(all[ex].score, myScore);
+    else all.push({ name: myName, score: myScore, badge: '🎮' });
+    all.sort((a, b) => b.score - a.score);
+  }
+  const myRank = myName ? all.findIndex(p => p.name === myName) + 1 : -1;
+  body.innerHTML = `
+    <div class="lb-input-wrap">
+      <input class="lb-input" id="lb-name" placeholder="Enter your name…" value="${myName}" maxlength="20">
+      <button class="lb-submit" onclick="submitLB()">🏆 SUBMIT</button>
+    </div>
+    ${myName ? `<div class="lb-me"><div class="lb-rank ${myRank===1?'gold':myRank===2?'silver':myRank===3?'bronze':''}">#${myRank > 0 ? myRank : '?'}</div><div class="lb-name">👤 ${myName} <span class="lb-badge">YOU</span></div><div class="lb-score">${myScore} elements</div></div>` : ''}
+    <div class="lb-wrap">${all.slice(0, 12).map((p, i) => {
+      const r = i + 1, isMe = p.name === myName;
+      return `<div class="${isMe?'lb-me':'lb-row'}"><div class="lb-rank ${r===1?'gold':r===2?'silver':r===3?'bronze':''}">${r===1?'🥇':r===2?'🥈':r===3?'🥉':'#'+r}</div><div class="lb-name">${p.badge||''} ${p.name}${isMe?` <span class="lb-badge">YOU</span>`:''}</div><div class="lb-score">${p.score} elements</div></div>`;
+    }).join('')}</div>`;
+}
+window.submitLB = function() {
+  const n = document.getElementById('lb-name').value.trim();
+  if (!n) { showCombo('⚠️ Enter a name!', '#ffaa44'); return; }
+  localStorage.setItem('ie3_name', n); showCombo('🏆 SCORE SUBMITTED!', '#ffd700'); renderLeaderboard(); save();
+};
+
+// ============================================================
+//  MODAL HELPERS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  Poki.onModalOpen();   // → sdk.gameplayStop() + mute music + block craft area
+  if (id === 'leaderboard-modal') renderLeaderboard();
+  if (id === 'ai-modal') renderAIModal();
+  if (id === 'settings-modal') renderSettings();
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  Poki.onModalClose();  // → sdk.gameplayStart() + unmute + unblock (if no other modal/ad)
+}
+window.openModal = openModal; window.closeModal = closeModal;
+
+// ============================================================
+//  SETTINGS PANEL
+// ============================================================
+function renderSettings() {
+  const list = document.getElementById('sett-list');
+  if (!list) return;
+
+  const volPct = Math.round(GS.musicVol * 100);
+  const volIcon = GS.musicVol === 0 ? '🔇' : GS.musicVol < 0.4 ? '🔈' : GS.musicVol < 0.75 ? '🔉' : '🔊';
+
+  list.innerHTML = `
+    <!-- VOLUME -->
+    <div class="sett-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="sett-left">
+          <div class="sett-label">🎵 Music Volume</div>
+          <div class="sett-desc">Adjust or mute the background music</div>
+        </div>
+        <span class="vol-val" id="vol-val-disp">${volPct}%</span>
+      </div>
+      <div class="vol-row">
+        <span class="vol-icon" id="vol-icon-disp">${volIcon}</span>
+        <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="${volPct}" step="1">
+      </div>
+    </div>
+
+    <!-- HINTS -->
+    <div class="sett-row">
+      <div class="sett-left">
+        <div class="sett-label">💡 Combo Hints</div>
+        <div class="sett-desc">Green glow on compatible elements, auto-suggestions & HINT button</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="tog-hints" ${GS.hintsOn ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- FAIL EMOJIS -->
+    <div class="sett-row">
+      <div class="sett-left">
+        <div class="sett-label">🤷 No-Reaction Alerts</div>
+        <div class="sett-desc">Show popup messages when a combination fails</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="tog-fail" ${GS.failEmojisOn ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- BG INTERACTIVE -->
+    <div class="sett-row">
+      <div class="sett-left">
+        <div class="sett-label">✨ Interactive Background</div>
+        <div class="sett-desc">Click on the background to trigger special effects</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="tog-bgfx" ${GS.bgInteractOn ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div style="margin-top:4px;text-align:center;font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.5px;">Settings save automatically</div>
+  `;
+
+  // Wire volume slider
+  const slider = document.getElementById('vol-slider');
+  const volDisp = document.getElementById('vol-val-disp');
+  const volIconEl = document.getElementById('vol-icon-disp');
+  slider.addEventListener('input', () => {
+    const v = slider.value / 100;
+    volDisp.textContent = slider.value + '%';
+    volIconEl.textContent = v === 0 ? '🔇' : v < 0.4 ? '🔈' : v < 0.75 ? '🔉' : '🔊';
+    Music.setVolume(v);
+  });
+
+  // Wire toggles
+  document.getElementById('tog-hints').addEventListener('change', e => {
+    GS.hintsOn = e.target.checked;
+    // Show/hide the HINT button based on setting
+    const hintBtn = document.getElementById('suggest-btn');
+    if (hintBtn) hintBtn.style.display = GS.hintsOn ? '' : 'none';
+    const adHintBtn = document.getElementById('ad-hint-btn');
+    if (adHintBtn) adHintBtn.style.display = GS.hintsOn ? '' : 'none';
+    save();
+  });
+  document.getElementById('tog-fail').addEventListener('change', e => {
+    GS.failEmojisOn = e.target.checked; save();
+  });
+  document.getElementById('tog-bgfx').addEventListener('change', e => {
+    GS.bgInteractOn = e.target.checked; save();
+  });
+}
+
+window.clearBoard = () => { CE.clearAll(); CE.addStarters(); };
+
+// ============================================================
+//  INIT
+// ============================================================
+function init() {
+  load();
+
+  // Poki SDK init + loading screen
+  let progress = 0;
+  const loadingMsgs = ['FORGING ELEMENTS…', 'IGNITING STARDUST…', 'WEAVING COSMOS…', 'SUMMONING PHASER…', 'CONNECTING POKI…'];
+  let lmi = 0;
+  const lmTimer = setInterval(() => { document.getElementById('poki-sub').textContent = loadingMsgs[lmi++ % loadingMsgs.length]; }, 400);
+  const barInterval = setInterval(() => {
+    progress = Math.min(progress + Math.random() * 12, 92);
+    document.getElementById('poki-bar').style.width = progress + '%';
+  }, 150);
+
+  Poki.init((ready) => {
+    clearInterval(barInterval); clearInterval(lmTimer);
+    document.getElementById('poki-bar').style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('poki-loading').classList.add('hide');
+      setTimeout(() => document.getElementById('poki-loading').remove(), 700);
+      // Boot everything
+      BG.init(); BG.setBg(GS.activeBg);
+      renderList(); updateCoinUI(); updateDiscCount();
+      initSidebarDrag();
+
+      // Background name badge
+      const badge = document.createElement('div');
+      badge.id = 'bg-badge';
+      badge.style.cssText = 'position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:5px 11px;font-size:10px;color:rgba(255,255,255,.38);pointer-events:none;z-index:30;backdrop-filter:blur(8px);';
+      document.getElementById('craft-area').appendChild(badge);
+      BG.setBg(GS.activeBg);
+
+      // Category filter
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active'); GS.activeFilter = btn.dataset.cat; renderList();
+        });
+      });
+      document.getElementById('element-search').addEventListener('input', e => { GS.searchQ = e.target.value; renderList(); });
+
+      // Init Phaser (hidden, for touch normalization)
+      try {
+        new Phaser.Game(phaserConfig);
+      } catch (e) { console.log('Phaser init skipped:', e.message); }
+
+      // Apply loaded settings immediately
+      const hintBtn = document.getElementById('suggest-btn');
+      if (hintBtn && !GS.hintsOn) hintBtn.style.display = 'none';
+      const adHintBtn = document.getElementById('ad-hint-btn');
+      if (adHintBtn && !GS.hintsOn) adHintBtn.style.display = 'none';
+
+      // Click outside modal to close (also triggers Poki.onModalClose)
+      document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+      });
+
+      // Start starters + music on first click
+      setTimeout(() => { CE.addStarters(); }, 300);
+      document.addEventListener('click', () => { if (!Music.isPlaying()) Music.start(); }, { once: true });
+      document.addEventListener('touchstart', () => { if (!Music.isPlaying()) Music.start(); }, { once: true });
+
+      Poki.gameplayStart();
+      _sh = _hash(GS.coins, GS.discovered);
+    }, 400);
+  });
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
